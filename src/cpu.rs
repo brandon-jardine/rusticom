@@ -26,7 +26,7 @@ pub enum AddressingMode {
     Absolute_Y,
     Indirect_X,
     Indirect_Y,
-    NoneAddressing,
+    Implied,
 }
 
 trait Mem {
@@ -129,7 +129,7 @@ impl CPU {
                 let deref = deref_base.wrapping_add(self.register_y as u16);
                 deref
             }
-            AddressingMode::NoneAddressing => {
+            AddressingMode::Implied => {
                 panic!("mode {:?} is not supported", mode);
             }
         }
@@ -141,6 +141,14 @@ impl CPU {
 
         self.register_a = value;
         self.update_zero_and_negative_flags(self.register_a);
+    }
+
+    fn ldx(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        let value = self.mem_read(addr);
+
+        self.register_x = value;
+        self.update_zero_and_negative_flags(self.register_x);
     }
 
     fn tax(&mut self) {
@@ -211,13 +219,17 @@ impl CPU {
                     self.lda(&opcode.mode);
                 },
 
+                0xA2 | 0xA6 | 0xB6 | 0xAE | 0xBE => {
+                    self.ldx(&opcode.mode);
+                },
+
                 0x85 | 0x95 | 0x8D | 0x9D | 0x99 | 0x81 | 0x91 => {
                     self.sta(&opcode.mode);
                 },
 
-                0xAA => self.tax(),
                 0xE8 => self.inx(),
 
+                0xAA => self.tax(),
                 0xA8 => self.tay(),
                 0xBA => self.tsx(),
                 0x8A => self.txa(),
