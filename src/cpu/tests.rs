@@ -363,3 +363,29 @@ fn test_sty_absolute() {
 
     assert_eq!(cpu.memory[0x1234], 0xCD);
 }
+
+
+#[test]
+fn test_stx_zero_page() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![0xA2, 0xDD, 0x86, 0xB0, 0x00]);
+
+    assert_eq!(cpu.memory[0xB0], 0xDD);
+}
+
+#[test]
+fn test_stx_zero_page_y() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![0xA0, 0x0B, 0xA2, 0x78, 0x96, 0x30, 0x00]);
+
+    assert_eq!(cpu.memory[0x3B], 0x78);
+}
+
+#[test]
+fn test_stx_absolute() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![0xA2, 0xCE, 0x8E, 0x35, 0x13, 0x00]);
+
+    assert_eq!(cpu.memory[0x1335], 0xCE);
+}
+

@@ -179,6 +179,11 @@ impl CPU {
         self.mem_write(addr, self.register_y);
     }
 
+    fn stx(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        self.mem_write(addr, self.register_x);
+    }
+
     fn tay(&mut self) {
         self.register_y = self.register_a;
         self.update_zero_and_negative_flags(self.register_a);
@@ -246,6 +251,10 @@ impl CPU {
 
                 0x84 | 0x94 | 0x8C => {
                     self.sty(&opcode.mode);
+                },
+
+                0x86 | 0x96 | 0x8E => {
+                    self.stx(&opcode.mode);
                 },
 
                 0xE8 => self.inx(),
