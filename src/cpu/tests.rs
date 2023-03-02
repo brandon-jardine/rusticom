@@ -340,3 +340,26 @@ fn test_ldy_negative_flag() {
     assert!(cpu.status & 0b1000_0000 == 0b1000_0000)
 }
 
+#[test]
+fn test_sty_zero_page() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![0xA0, 0x11, 0x84, 0xBD, 0x00]);
+
+    assert_eq!(cpu.memory[0xBD], 0x11);
+}
+
+#[test]
+fn test_sty_zero_page_x() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![0xA2, 0x0A, 0xA0, 0x77, 0x94, 0x30, 0x00]);
+
+    assert_eq!(cpu.memory[0x3A], 0x77);
+}
+
+#[test]
+fn test_sty_absolute() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![0xA0, 0xCD, 0x8C, 0x34, 0x12, 0x00]);
+
+    assert_eq!(cpu.memory[0x1234], 0xCD);
+}
