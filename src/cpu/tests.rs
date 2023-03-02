@@ -76,12 +76,14 @@ fn test_reset() {
     cpu.register_x = 0xff;
     cpu.register_a = 0xff;
     cpu.register_y = 0xff;
+    cpu.register_s = 0x00;
     cpu.status = 0xff;
     cpu.reset();
 
     assert_eq!(cpu.register_x, 0);
     assert_eq!(cpu.register_a, 0);
     assert_eq!(cpu.register_y, 0);
+    assert_eq!(cpu.register_s, 0xff);
     assert_eq!(cpu.status, 0);
 }
 
@@ -135,6 +137,36 @@ fn test_txa_negative_flag() {
     cpu.load(vec![0x8A, 0x00]);
     cpu.reset();
     cpu.register_x = 0b1000_0010;
+    cpu.run();
+
+    assert!(cpu.status & 0b1000_0000 == 0b1000_0000)
+}
+
+#[test]
+fn test_tsx_move_s_to_x() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![0xBA, 0x00]);
+
+    assert_eq!(cpu.register_x, 0xff);
+}
+
+#[test]
+fn test_tsx_zero_flag() {
+    let mut cpu = CPU::new();
+    cpu.load(vec![0xBA, 0x00]);
+    cpu.reset();
+    cpu.register_s = 0;
+    cpu.run();
+
+    assert!(cpu.status & 0b0000_0010 == 0b10);
+}
+
+#[test]
+fn test_tsx_negative_flag() {
+    let mut cpu = CPU::new();
+    cpu.load(vec![0xBA, 0x00]);
+    cpu.reset();
+    cpu.register_s = 0b1000_0010;
     cpu.run();
 
     assert!(cpu.status & 0b1000_0000 == 0b1000_0000)
