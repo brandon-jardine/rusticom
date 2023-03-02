@@ -171,3 +171,27 @@ fn test_tsx_negative_flag() {
 
     assert!(cpu.status & 0b1000_0000 == 0b1000_0000)
 }
+
+#[test]
+fn test_tay_move_a_to_y() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![0xA9, 0x13, 0xA8, 0x00]);
+
+    assert_eq!(cpu.register_y, 0x13);
+}
+
+#[test]
+fn test_tay_zero_flag() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![0xA9, 0x00, 0xA8, 0x00]);
+
+    assert!(cpu.status & 0b0000_0010 == 0b10);
+}
+
+#[test]
+fn test_tay_negative_flag() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![0xA9, 0b1000_0010, 0xA8, 0x00]);
+
+    assert!(cpu.status & 0b1000_0000 == 0b1000_0000)
+}

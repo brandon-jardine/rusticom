@@ -158,6 +158,11 @@ impl CPU {
         self.mem_write(addr, self.register_a);
     }
 
+    fn tay(&mut self) {
+        self.register_y = self.register_a;
+        self.update_zero_and_negative_flags(self.register_a);
+    }
+
     fn tsx(&mut self) {
         self.register_x = self.register_s;
         self.update_zero_and_negative_flags(self.register_x);
@@ -213,6 +218,7 @@ impl CPU {
                 0xAA => self.tax(),
                 0xE8 => self.inx(),
 
+                0xA8 => self.tay(),
                 0xBA => self.tsx(),
                 0x8A => self.txa(),
                 0x9A => self.txs(),
