@@ -184,6 +184,10 @@ impl CPU {
         self.mem_write(addr, self.register_x);
     }
 
+    fn sei(&mut self) {
+        self.status = self.status | 0b0000_0100;
+    }
+
     fn tay(&mut self) {
         self.register_y = self.register_a;
         self.update_zero_and_negative_flags(self.register_a);
@@ -256,6 +260,8 @@ impl CPU {
                 0x86 | 0x96 | 0x8E => {
                     self.stx(&opcode.mode);
                 },
+
+                0x78 => self.sei(),
 
                 0xE8 => self.inx(),
 

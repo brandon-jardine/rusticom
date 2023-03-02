@@ -389,3 +389,10 @@ fn test_stx_absolute() {
     assert_eq!(cpu.memory[0x1335], 0xCE);
 }
 
+#[test]
+fn test_sti_interrupt_disable() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![0x78, 0x00]);
+
+    assert!(cpu.status & 0b0000_0100 == 0b0000_0100);
+}

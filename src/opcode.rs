@@ -63,6 +63,8 @@ lazy_static! {
         OpCode::new(0x96, "STY", 2, 4, AddressingMode::ZeroPage_Y),
         OpCode::new(0x8E, "STY", 3, 4, AddressingMode::Absolute),
 
+        OpCode::new(0x78, "SEI", 1, 2, AddressingMode::Implied),
+
         OpCode::new(0xaa, "TAX", 1, 2, AddressingMode::Implied),
         OpCode::new(0xA8, "TAY", 1, 2, AddressingMode::Implied),
         OpCode::new(0xBA, "TSX", 1, 2, AddressingMode::Implied),
