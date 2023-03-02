@@ -5,6 +5,7 @@ pub struct CPU {
     pub register_a: u8,
     pub register_x: u8,
     pub register_y: u8,
+    pub register_s: u8,
     pub status: u8,
     pub program_counter: u16,
     memory: [u8; 0xFFFF],
@@ -57,6 +58,7 @@ impl CPU {
             register_a: 0,
             register_x: 0,
             register_y: 0,
+            register_s: 0xff,
             status: 0,
             program_counter: 0,
             memory: [0; 0xFFFF],
@@ -78,6 +80,7 @@ impl CPU {
         self.register_a = 0;
         self.register_x = 0;
         self.register_y = 0;
+        self.register_s = 0xff;
         self.status = 0;
 
         self.program_counter = self.mem_read_u16(0xFFFC);
@@ -152,6 +155,15 @@ impl CPU {
         self.mem_write(addr, self.register_a);
     }
 
+    fn txa(&mut self) {
+        self.register_a = self.register_x;
+        self.update_zero_and_negative_flags(self.register_a)
+    }
+
+    fn txs(&mut self) {
+        self.register_s = self.register_x;
+    }
+
     fn tya(&mut self) {
         self.register_a = self.register_y;
         self.update_zero_and_negative_flags(self.register_a);
@@ -193,6 +205,8 @@ impl CPU {
                 0xAA => self.tax(),
                 0xE8 => self.inx(),
 
+                0x8A => self.txa(),
+                0x9A => self.txs(),
                 0x98 => self.tya(),
 
                 0x00 => return,         // BRK
@@ -296,7 +310,7 @@ mod test {
     }
 
     #[test]
-    fn test_tya() {
+    fn test_tya_move_y_to_a() {
         let mut cpu = CPU::new();
         cpu.load(vec![0x98, 0x00]);
         cpu.reset();
@@ -305,4 +319,50 @@ mod test {
 
         assert_eq!(cpu.register_a, 15);
     }
+
+    #[test]
+    fn test_txs_move_x_to_s() {
+        let mut cpu = CPU::new();
+        cpu.load(vec![0x9A, 0x00]);
+        cpu.reset();
+        cpu.register_x = 69;
+        cpu.run();
+
+        assert_eq!(cpu.register_s, 69);
+    }
+
+    #[test]
+    fn test_txa_move_x_to_a() {
+        let mut cpu = CPU::new();
+        cpu.load(vec![0x8A, 0x00]);
+        cpu.reset();
+        cpu.register_x = 37;
+        cpu.run();
+
+        assert_eq!(cpu.register_a, 37);
+    }
+
+    #[test]
+    fn test_txa_zero_flag() {
+        let mut cpu = CPU::new();
+        cpu.load(vec![0x8A, 0x00]);
+        cpu.reset();
+        cpu.register_x = 0;
+        cpu.run();
+
+        assert!(cpu.status & 0b0000_0010 == 0b10);
+    }
+
+    #[test]
+    fn test_txa_negative_flag() {
+        let mut cpu = CPU::new();
+        cpu.load(vec![0x8A, 0x00]);
+        cpu.reset();
+        cpu.register_x = 0b1000_0010;
+        cpu.run();
+
+        assert!(cpu.status & 0b1000_0000 == 0b1000_0000)
+    }
+
+
 }
