@@ -6,8 +6,8 @@ fn test_0xa9_lda_immidiate_load_data() {
     cpu.load_and_run(vec![0xa9, 0x05, 0x00]);
 
     assert_eq!(cpu.register_a, 0x05);
-    assert!(cpu.status & 0b0000_0010 == 0b00);
-    assert!(cpu.status & 0b1000_0000 == 0);
+    assert!(!cpu.status.contains(StatusFlags::ZERO));
+    assert!(!cpu.status.contains(StatusFlags::NEGATIVE));
 }
 
 #[test]
@@ -35,7 +35,7 @@ fn test_0xa9_lda_zero_flag() {
     let mut cpu = CPU::new();
     cpu.load_and_run(vec![0xa9, 0x00, 0x00]);
 
-    assert!(cpu.status & 0b0000_0010 == 0b10);
+    assert!(cpu.status.contains(StatusFlags::ZERO));
 }
 
 #[test]
@@ -77,14 +77,14 @@ fn test_reset() {
     cpu.register_a = 0xff;
     cpu.register_y = 0xff;
     cpu.register_s = 0x00;
-    cpu.status = 0xff;
+    cpu.status = StatusFlags::from_bits_truncate(0xFF);
     cpu.reset();
 
     assert_eq!(cpu.register_x, 0);
     assert_eq!(cpu.register_a, 0);
     assert_eq!(cpu.register_y, 0);
     assert_eq!(cpu.register_s, 0xff);
-    assert_eq!(cpu.status, 0);
+    assert_eq!(cpu.status.bits(), 0);
 }
 
 #[test]
@@ -128,7 +128,7 @@ fn test_txa_zero_flag() {
     cpu.register_x = 0;
     cpu.run();
 
-    assert!(cpu.status & 0b0000_0010 == 0b10);
+    assert!(cpu.status.contains(StatusFlags::ZERO));
 }
 
 #[test]
@@ -139,7 +139,7 @@ fn test_txa_negative_flag() {
     cpu.register_x = 0b1000_0010;
     cpu.run();
 
-    assert!(cpu.status & 0b1000_0000 == 0b1000_0000)
+    assert!(cpu.status.contains(StatusFlags::NEGATIVE));
 }
 
 #[test]
@@ -158,7 +158,7 @@ fn test_tsx_zero_flag() {
     cpu.register_s = 0;
     cpu.run();
 
-    assert!(cpu.status & 0b0000_0010 == 0b10);
+    assert!(cpu.status.contains(StatusFlags::ZERO));
 }
 
 #[test]
@@ -169,7 +169,7 @@ fn test_tsx_negative_flag() {
     cpu.register_s = 0b1000_0010;
     cpu.run();
 
-    assert!(cpu.status & 0b1000_0000 == 0b1000_0000)
+    assert!(cpu.status.contains(StatusFlags::NEGATIVE));
 }
 
 #[test]
@@ -185,7 +185,7 @@ fn test_tay_zero_flag() {
     let mut cpu = CPU::new();
     cpu.load_and_run(vec![0xA9, 0x00, 0xA8, 0x00]);
 
-    assert!(cpu.status & 0b0000_0010 == 0b10);
+    assert!(cpu.status.contains(StatusFlags::ZERO));
 }
 
 #[test]
@@ -193,7 +193,7 @@ fn test_tay_negative_flag() {
     let mut cpu = CPU::new();
     cpu.load_and_run(vec![0xA9, 0b1000_0010, 0xA8, 0x00]);
 
-    assert!(cpu.status & 0b1000_0000 == 0b1000_0000)
+    assert!(cpu.status.contains(StatusFlags::NEGATIVE));
 }
 
 #[test]
@@ -257,7 +257,7 @@ fn test_ldx_zero_flag() {
     let mut cpu = CPU::new();
     cpu.load_and_run(vec![0xa2, 0x00, 0x00]);
 
-    assert!(cpu.status & 0b0000_0010 == 0b10);
+    assert!(cpu.status.contains(StatusFlags::ZERO));
 }
 
 #[test]
@@ -265,7 +265,7 @@ fn test_ldx_negative_flag() {
     let mut cpu = CPU::new();
     cpu.load_and_run(vec![0xA2, 0b1011_0010, 0x00]);
 
-    assert!(cpu.status & 0b1000_0000 == 0b1000_0000)
+    assert!(cpu.status.contains(StatusFlags::NEGATIVE));
 }
 
 #[test]
@@ -329,7 +329,7 @@ fn test_ldy_zero_flag() {
     let mut cpu = CPU::new();
     cpu.load_and_run(vec![0xa0, 0x00, 0x00]);
 
-    assert!(cpu.status & 0b0000_0010 == 0b10);
+    assert!(cpu.status.contains(StatusFlags::ZERO));
 }
 
 #[test]
@@ -337,7 +337,7 @@ fn test_ldy_negative_flag() {
     let mut cpu = CPU::new();
     cpu.load_and_run(vec![0xA2, 0b1001_0111, 0x00]);
 
-    assert!(cpu.status & 0b1000_0000 == 0b1000_0000)
+    assert!(cpu.status.contains(StatusFlags::NEGATIVE));
 }
 
 #[test]
@@ -394,7 +394,7 @@ fn test_sei_interrupt_disable() {
     let mut cpu = CPU::new();
     cpu.load_and_run(vec![0x78, 0x00]);
 
-    assert!(cpu.status & 0b0000_0100 == 0b0000_0100);
+    assert!(cpu.status.contains(StatusFlags::INTERRUPT_DISABLE));
 }
 
 #[test]
@@ -402,5 +402,5 @@ fn test_sed_decimal_flag() {
     let mut cpu = CPU::new();
     cpu.load_and_run(vec![0xF8, 0x00]);
 
-    assert!(cpu.status & 0b0000_1000 == 0b0000_1000);
+    assert!(cpu.status.contains(StatusFlags::DECIMAL_MODE));
 }

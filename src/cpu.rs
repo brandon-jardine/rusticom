@@ -1,15 +1,29 @@
+use bitflags::bitflags;
 use std::collections::HashMap;
 use crate::opcode;
 
 #[cfg(test)]
 mod tests;
 
+bitflags! {
+    pub struct StatusFlags: u8 {
+        const CARRY             = 0b0000_0001;
+        const ZERO              = 0b0000_0010;
+        const INTERRUPT_DISABLE = 0b0000_0100;
+        const DECIMAL_MODE      = 0b0000_1000;
+        const BREAK             = 0b0001_0000;
+        const BREAK2            = 0b0010_0000;
+        const OVERFLOW          = 0b0100_0000;
+        const NEGATIVE          = 0b1000_0000;
+    }
+}
+
 pub struct CPU {
     pub register_a: u8,
     pub register_x: u8,
     pub register_y: u8,
     pub register_s: u8,
-    pub status: u8,
+    pub status: StatusFlags,
     pub program_counter: u16,
     memory: [u8; 0xFFFF],
 }
@@ -62,7 +76,7 @@ impl CPU {
             register_x: 0,
             register_y: 0,
             register_s: 0xff,
-            status: 0,
+            status: StatusFlags::from_bits_truncate(0),
             program_counter: 0,
             memory: [0; 0xFFFF],
         }
@@ -84,7 +98,7 @@ impl CPU {
         self.register_x = 0;
         self.register_y = 0;
         self.register_s = 0xff;
-        self.status = 0;
+        self.status = StatusFlags::from_bits_truncate(0);
 
         self.program_counter = self.mem_read_u16(0xFFFC);
     }
@@ -184,14 +198,6 @@ impl CPU {
         self.mem_write(addr, self.register_x);
     }
 
-    fn sed(&mut self) {
-        self.status = self.status | 0b0000_1000;
-    }
-
-    fn sei(&mut self) {
-        self.status = self.status | 0b0000_0100;
-    }
-
     fn tay(&mut self) {
         self.register_y = self.register_a;
         self.update_zero_and_negative_flags(self.register_a);
@@ -217,17 +223,8 @@ impl CPU {
     }
 
     fn update_zero_and_negative_flags(&mut self, result: u8) {
-        if result == 0 {
-            self.status = self.status | 0b0000_0010;
-        } else {
-            self.status = self.status & 0b1111_1101;
-        }
-
-        if result & 0b1000_0000 != 0 {
-            self.status = self.status | 0b1000_0000;
-        } else {
-            self.status = self.status & 0b0111_1111;
-        }
+        self.status.set(StatusFlags::ZERO, result == 0);
+        self.status.set(StatusFlags::NEGATIVE, result & 0b1000_0000 != 0);
     }
 
     pub fn run(&mut self) {
@@ -265,8 +262,8 @@ impl CPU {
                     self.stx(&opcode.mode);
                 },
 
-                0xF8 => self.sed(),
-                0x78 => self.sei(),
+                0xF8 => self.status.set(StatusFlags::DECIMAL_MODE, true),
+                0x78 => self.status.set(StatusFlags::INTERRUPT_DISABLE, true),
 
                 0xE8 => self.inx(),
 
