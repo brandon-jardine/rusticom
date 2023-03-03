@@ -404,3 +404,11 @@ fn test_sed_decimal_flag() {
 
     assert!(cpu.status.contains(StatusFlags::DECIMAL_MODE));
 }
+
+#[test]
+fn test_sec_carry_flag() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![0x38, 0x00]);
+
+    assert!(cpu.status.contains(StatusFlags::CARRY));
+}

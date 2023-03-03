@@ -262,6 +262,7 @@ impl CPU {
                     self.stx(&opcode.mode);
                 },
 
+                0x38 => self.status.set(StatusFlags::CARRY, true),
                 0xF8 => self.status.set(StatusFlags::DECIMAL_MODE, true),
                 0x78 => self.status.set(StatusFlags::INTERRUPT_DISABLE, true),
 
