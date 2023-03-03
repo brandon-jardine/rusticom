@@ -184,6 +184,10 @@ impl CPU {
         self.mem_write(addr, self.register_x);
     }
 
+    fn sed(&mut self) {
+        self.status = self.status | 0b0000_1000;
+    }
+
     fn sei(&mut self) {
         self.status = self.status | 0b0000_0100;
     }
@@ -261,6 +265,7 @@ impl CPU {
                     self.stx(&opcode.mode);
                 },
 
+                0xF8 => self.sed(),
                 0x78 => self.sei(),
 
                 0xE8 => self.inx(),

@@ -390,9 +390,17 @@ fn test_stx_absolute() {
 }
 
 #[test]
-fn test_sti_interrupt_disable() {
+fn test_sei_interrupt_disable() {
     let mut cpu = CPU::new();
     cpu.load_and_run(vec![0x78, 0x00]);
 
     assert!(cpu.status & 0b0000_0100 == 0b0000_0100);
+}
+
+#[test]
+fn test_sed_decimal_flag() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![0xF8, 0x00]);
+
+    assert!(cpu.status & 0b0000_1000 == 0b0000_1000);
 }
