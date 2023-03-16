@@ -412,3 +412,61 @@ fn test_sec_carry_flag() {
 
     assert!(cpu.status.contains(StatusFlags::CARRY));
 }
+
+#[test]
+fn test_and_immediate() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![0xA9, 0b0111_1111, 0x29, 0b1010_0101, 0x00]);
+
+    assert_eq!(cpu.register_a, 0b0010_0101);
+}
+
+#[test]
+fn test_and_indirect_x() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA9, 0b0000_0010, // LDA #$02
+        0x85, 0xFF, // STA $FF
+        0xA9, 0xFF, // LDA #$FF
+        0x85, 0x04, // STA $04
+        0xA2, 0x04, // LDX $04
+        0xA9, 0xFF, // LDA #$FF
+        0x21, 0x00, // AND ($00, x)
+    ]);
+
+    assert_eq!(cpu.register_a, 0b0000_0010);
+}
+
+#[test]
+fn test_and_indirect_y() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA9, 0b0000_0100, // LDA #$04
+        0x85, 0xFF, // STA $FF
+        0xA9, 0xF0, // LDA #$F0
+        0x85, 0x00, // STA $00
+        0xA9, 0x00, // LDA #$00
+        0x85, 0x01, // STA $01
+        0xA0, 0x0F, // LDY #$0F
+        0xA9, 0xFF, // LDA #$FF
+        0x31, 0x00, // AND ($00), y
+    ]);
+
+    assert_eq!(cpu.register_a, 0b0000_0100);
+}
+
+#[test]
+fn test_and_negative_flag() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![0xA9, 0b1101_1010, 0x29, 0b1101_1010, 0x00]);
+
+    assert!(cpu.status.contains(StatusFlags::NEGATIVE));
+}
+
+#[test]
+fn test_and_zero_flag() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![0xA9, 0b0101_1010, 0x29, 0b1010_0101, 0x00]);
+
+    assert!(cpu.status.contains(StatusFlags::ZERO));
+}
