@@ -156,6 +156,24 @@ impl CPU {
         self.update_zero_and_negative_flags(self.register_a);
     }
 
+    fn asl(&mut self, mode: &AddressingMode) {
+        if matches!(mode, AddressingMode::Implied) {
+            let carry = 0b1000_0000 & self.register_a == 0b1000_0000;
+            self.register_a <<= 1;
+            self.status.set(StatusFlags::CARRY, carry);
+
+            self.update_zero_and_negative_flags(self.register_a);
+        } else {
+            let addr = self.get_operand_address(mode);
+            let value = self.mem_read(addr);
+            let carry = value & 0b1000_0000 == 0b1000_0000;
+            self.mem_write(addr, value << 1);
+            self.status.set(StatusFlags::CARRY, carry);
+
+            self.update_zero_and_negative_flags(self.mem_read(addr));
+        }
+    }
+
     fn lda(&mut self, mode: &AddressingMode) {
         let addr = self.get_operand_address(mode);
         let value = self.mem_read(addr);
@@ -247,6 +265,10 @@ impl CPU {
             match code {
                 0x29 | 0x25 | 0x35 | 0x2D | 0x3D | 0x39 | 0x21 | 0x31 => {
                     self.and(&opcode.mode);
+                },
+
+                0x0A | 0x06 | 0x16 | 0x0E | 0x1E => {
+                    self.asl(&opcode.mode);
                 },
 
                 0xA9 | 0xA5 | 0xB5 | 0xAD | 0xBD | 0xB9 | 0xA1 | 0xB1 => {
