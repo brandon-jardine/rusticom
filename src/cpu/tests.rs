@@ -627,3 +627,14 @@ fn test_cld_decimal_flag() {
 
     assert!(!cpu.status.contains(StatusFlags::DECIMAL_MODE));
 }
+
+#[test]
+fn test_cli_interrupt_flag() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0x78,   // SEI
+        0x58,   // CLI
+    ]);
+
+    assert!(!cpu.status.contains(StatusFlags::INTERRUPT_DISABLE));
+}
