@@ -616,3 +616,14 @@ fn test_clc_carry_flag() {
 
     assert!(!cpu.status.contains(StatusFlags::CARRY));
 }
+
+#[test]
+fn test_cld_decimal_flag() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xF8,   // SED
+        0xD8,   // CLD
+    ]);
+
+    assert!(!cpu.status.contains(StatusFlags::DECIMAL_MODE));
+}

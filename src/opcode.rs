@@ -44,6 +44,7 @@ lazy_static! {
         OpCode::new(0x00, "BRK", 1, 7, AddressingMode::Implied),
 
         OpCode::new(0x18, "CLC", 1, 2, AddressingMode::Implied),
+        OpCode::new(0xD8, "CLD", 1, 2, AddressingMode::Implied),
 
         OpCode::new(0xE8, "INX", 1, 2, AddressingMode::Implied),
 
