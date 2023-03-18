@@ -564,3 +564,43 @@ fn test_and_zero_flag() {
 
     assert!(cpu.status.contains(StatusFlags::ZERO));
 }
+
+#[test]
+fn test_bit_zero_flag() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA9, 0b1010_1010,
+        0x85, 0x10,
+        0xA9, 0b0101_0101,
+        0x24, 0x10
+    ]);
+
+    assert!(cpu.status.contains(StatusFlags::ZERO));
+
+    cpu.load_and_run(vec![
+        0xA9, 0b1011_1010,
+        0x85, 0x10,
+        0xA9, 0b0101_0101,
+        0x24, 0x10
+    ]);
+
+    assert!(!cpu.status.contains(StatusFlags::ZERO));
+}
+
+#[test]
+fn test_bit_overflow_negative_flag() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA9, 0b1010_1010,
+        0x85, 0x10,
+        0xA9, 0b0101_0101,
+        0x24, 0x10
+    ]);
+
+    let mem = cpu.mem_read(0x0010);
+    let b6 = mem & 0b0100_0000;
+    let b7 = mem & 0b1000_0000;
+
+    assert_eq!(cpu.status.bits & 0b0100_0000, b6);
+    assert_eq!(cpu.status.bits & 0b1000_0000, b7);
+}

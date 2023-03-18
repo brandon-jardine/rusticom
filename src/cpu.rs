@@ -174,6 +174,20 @@ impl CPU {
         }
     }
 
+    fn bit(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        let value = self.mem_read(addr);
+
+        let b6 = value & 0b0100_0000 == 0b0100_0000;
+        let b7 = value & 0b1000_0000 == 0b1000_0000;
+
+        let zero = value & self.register_a == 0;
+
+        self.status.set(StatusFlags::ZERO, zero);
+        self.status.set(StatusFlags::OVERFLOW, b6);
+        self.status.set(StatusFlags::NEGATIVE, b7);
+    }
+
     fn lda(&mut self, mode: &AddressingMode) {
         let addr = self.get_operand_address(mode);
         let value = self.mem_read(addr);
@@ -270,6 +284,8 @@ impl CPU {
                 0x0A | 0x06 | 0x16 | 0x0E | 0x1E => {
                     self.asl(&opcode.mode);
                 },
+
+                0x24 | 0x2C => self.bit(&opcode.mode),
 
                 0xA9 | 0xA5 | 0xB5 | 0xAD | 0xBD | 0xB9 | 0xA1 | 0xB1 => {
                     self.lda(&opcode.mode);
