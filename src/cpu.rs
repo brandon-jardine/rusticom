@@ -287,6 +287,8 @@ impl CPU {
 
                 0x24 | 0x2C => self.bit(&opcode.mode),
 
+                0x18 => self.status.set(StatusFlags::CARRY, false), // CLC
+
                 0xA9 | 0xA5 | 0xB5 | 0xAD | 0xBD | 0xB9 | 0xA1 | 0xB1 => {
                     self.lda(&opcode.mode);
                 },

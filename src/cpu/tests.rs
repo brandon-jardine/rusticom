@@ -604,3 +604,15 @@ fn test_bit_overflow_negative_flag() {
     assert_eq!(cpu.status.bits & 0b0100_0000, b6);
     assert_eq!(cpu.status.bits & 0b1000_0000, b7);
 }
+
+#[test]
+fn test_clc_carry_flag() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA9, 0b1000_0000,  // LDA
+        0x0A,               // ASL
+        0x18,               // CLC
+    ]);
+
+    assert!(!cpu.status.contains(StatusFlags::CARRY));
+}
