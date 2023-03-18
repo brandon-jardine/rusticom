@@ -290,6 +290,7 @@ impl CPU {
                 0x18 => self.status.set(StatusFlags::CARRY, false),         // CLC
                 0xD8 => self.status.set(StatusFlags::DECIMAL_MODE, false),  // CLD
                 0x58 => self.status.set(StatusFlags::INTERRUPT_DISABLE, false), // CLI
+                0xB8 => self.status.set(StatusFlags::OVERFLOW, false), // CLV
 
                 0xA9 | 0xA5 | 0xB5 | 0xAD | 0xBD | 0xB9 | 0xA1 | 0xB1 => {
                     self.lda(&opcode.mode);

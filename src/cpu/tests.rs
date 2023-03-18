@@ -638,3 +638,17 @@ fn test_cli_interrupt_flag() {
 
     assert!(!cpu.status.contains(StatusFlags::INTERRUPT_DISABLE));
 }
+
+#[test]
+fn test_clv_overflow_flag() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA9, 0b1111_0000,
+        0x85, 0x10,
+        0xA9, 0b0000_0000,
+        0x24, 0x10,
+        0xB8,
+    ]);
+
+    assert!(!cpu.status.contains(StatusFlags::OVERFLOW));
+}
