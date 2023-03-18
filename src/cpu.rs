@@ -188,6 +188,16 @@ impl CPU {
         self.status.set(StatusFlags::NEGATIVE, b7);
     }
 
+    fn cmp(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        let value = self.mem_read(addr);
+        let result = self.register_a - value;
+
+        self.status.set(StatusFlags::NEGATIVE, result & 0b1000_0000 == 0b1000_0000);
+        self.status.set(StatusFlags::ZERO, value == self.register_a);
+        self.status.set(StatusFlags::CARRY, self.register_a >= value);
+    }
+
     fn lda(&mut self, mode: &AddressingMode) {
         let addr = self.get_operand_address(mode);
         let value = self.mem_read(addr);
@@ -291,6 +301,10 @@ impl CPU {
                 0xD8 => self.status.set(StatusFlags::DECIMAL_MODE, false),  // CLD
                 0x58 => self.status.set(StatusFlags::INTERRUPT_DISABLE, false), // CLI
                 0xB8 => self.status.set(StatusFlags::OVERFLOW, false), // CLV
+
+                0xC9 | 0xC5 | 0xD5 | 0xCD | 0xDD | 0xD9 | 0xC1 | 0xD1 => {
+                    self.cmp(&opcode.mode);
+                }
 
                 0xA9 | 0xA5 | 0xB5 | 0xAD | 0xBD | 0xB9 | 0xA1 | 0xB1 => {
                     self.lda(&opcode.mode);

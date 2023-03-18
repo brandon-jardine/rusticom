@@ -652,3 +652,40 @@ fn test_clv_overflow_flag() {
 
     assert!(!cpu.status.contains(StatusFlags::OVERFLOW));
 }
+
+#[test]
+fn test_cmp_negative_flag() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA9, 0b1111_1111,
+        0xC9, 0b0100_0000,
+    ]);
+
+    assert!(cpu.status.contains(StatusFlags::NEGATIVE));
+}
+
+#[test]
+fn test_cmp_carry_flag() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA9, 0b0101_0101,
+        0x85, 0x09,
+        0xA9, 0b0111_0101,
+        0xC5, 0x09,
+    ]);
+
+    assert!(cpu.status.contains(StatusFlags::CARRY));
+}
+
+#[test]
+fn test_cmp_zero_flag() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA9, 0b0101_0101,
+        0xC9, 0b0101_0101,
+    ]);
+
+    assert!(cpu.status.contains(StatusFlags::CARRY));
+    assert!(cpu.status.contains(StatusFlags::ZERO));
+}
+
