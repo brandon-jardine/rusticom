@@ -57,6 +57,10 @@ lazy_static! {
         OpCode::new(0xC1, "CMP", 2, 6, AddressingMode::Indirect_X),
         OpCode::new(0xD1, "CMP", 2, 5 /* +1 if page crossed */, AddressingMode::Indirect_Y),
 
+        OpCode::new(0xE0, "CPX", 2, 2, AddressingMode::Immediate),
+        OpCode::new(0xE4, "CPX", 2, 3, AddressingMode::ZeroPage),
+        OpCode::new(0xEC, "CPX", 3, 4, AddressingMode::Absolute),
+
         OpCode::new(0xE8, "INX", 1, 2, AddressingMode::Implied),
 
         OpCode::new(0xA9, "LDA", 2, 2, AddressingMode::Immediate),
