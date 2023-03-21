@@ -157,25 +157,43 @@ impl CPU {
     }
 
     fn asl(&mut self, mode: &AddressingMode) {
+        let carry = 0b1000_0000 & self.register_a == 0b1000_0000;
+
         match mode {
             AddressingMode::Implied => {
-                let carry = 0b1000_0000 & self.register_a == 0b1000_0000;
                 self.register_a <<= 1;
-                self.status.set(StatusFlags::CARRY, carry);
-
                 self.update_zero_and_negative_flags(self.register_a);
             },
 
             _ => {
                 let addr = self.get_operand_address(mode);
                 let value = self.mem_read(addr);
-                let carry = value & 0b1000_0000 == 0b1000_0000;
                 self.mem_write(addr, value << 1);
-                self.status.set(StatusFlags::CARRY, carry);
-
                 self.update_zero_and_negative_flags(self.mem_read(addr));
-            }
+            },
         }
+
+        self.status.set(StatusFlags::CARRY, carry);
+    }
+
+    fn lsr(&mut self, mode: &AddressingMode) {
+        let carry = 1 & self.register_a == 1;
+
+        match mode {
+            AddressingMode::Implied => {
+                self.register_a >>= 1;
+                self.update_zero_and_negative_flags(self.register_a);
+            },
+
+            _ => {
+                let addr = self.get_operand_address(mode);
+                let value = self.mem_read(addr);
+                self.mem_write(addr, value >> 1);
+                self.update_zero_and_negative_flags(self.mem_read(addr));
+            },
+        }
+
+        self.status.set(StatusFlags::CARRY, carry);
     }
 
     fn bit(&mut self, mode: &AddressingMode) {
@@ -340,6 +358,10 @@ impl CPU {
 
                 0xA0 | 0xA4 | 0xB4 | 0xAC | 0xBC => {
                     self.ldy(&opcode.mode);
+                },
+
+                0x4A | 0x46 | 0x56 | 0x4E | 0x5E => {
+                    self.lsr(&opcode.mode);
                 },
 
                 0x85 | 0x95 | 0x8D | 0x9D | 0x99 | 0x81 | 0x91 => {

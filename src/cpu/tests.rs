@@ -766,3 +766,98 @@ fn test_cpy_negative_flag() {
 
     assert!(cpu.status.contains(StatusFlags::NEGATIVE));
 }
+
+#[test]
+fn test_lsr_carry_flag() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA9, 0b1010_0001,
+        0x4A,
+    ]);
+
+    assert!(cpu.status.contains(StatusFlags::CARRY));
+}
+
+#[test]
+fn test_lsr_zero_flag() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA9, 0b0000_0001,
+        0x4A,
+    ]);
+
+    assert!(cpu.status.contains(StatusFlags::ZERO));
+}
+
+#[test]
+fn test_lsr_negative_flag() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA9, 0b0100_0000,
+        0x4A,
+    ]);
+
+    // Bit 7 should always be zero when doing LSR
+    assert!(!cpu.status.contains(StatusFlags::NEGATIVE));
+}
+
+#[test]
+fn test_lsr_implied() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA9, 0b0000_1011,
+        0x4A,
+    ]);
+
+    assert_eq!(cpu.register_a, 0b0000_0101);
+}
+
+#[test]
+fn test_lsr_zero_page() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA9, 0b0101_1010,
+        0x85, 0x10,
+        0x46, 0x10,
+    ]);
+
+    assert_eq!(cpu.memory[0x10], 0b0010_1101);
+}
+
+#[test]
+fn test_lsr_zero_page_x() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA9, 0b0010_1101,
+        0x85, 0x06,
+        0xA2, 0x04,
+        0x56, 0x02,
+    ]);
+
+    assert_eq!(cpu.memory[0x06], 0b0001_0110);
+}
+
+#[test]
+fn test_lsr_absolute() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA9, 0b0011_0001,
+        0x8D, 0xAB, 0xCD,
+        0x4E, 0xAB, 0xCD,
+    ]);
+
+    assert_eq!(cpu.memory[0xCDAB], 0b0001_1000);
+}
+
+#[test]
+fn test_lsr_absolute_x() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA9, 0b0011_0001,
+        0x8D, 0x34, 0x30,
+        0xA2, 0x04,
+        0x5E, 0x30, 0x30,
+    ]);
+
+    assert_eq!(cpu.memory[0x3034], 0b0001_1000);
+}
