@@ -727,3 +727,42 @@ fn test_cpx_negative_flag() {
 
     assert!(cpu.status.contains(StatusFlags::NEGATIVE));
 }
+
+#[test]
+fn test_cpy_zero_flag() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA0, 0x45,
+        0xC0, 0x45,
+    ]);
+
+    assert!(cpu.status.contains(StatusFlags::ZERO));
+    assert!(cpu.status.contains(StatusFlags::CARRY));
+}
+
+#[test]
+fn test_cpy_carry_flag() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA9, 0x68,
+        0x85, 0x04,
+        0xA0, 0x69,
+        0xC4, 0x04,
+    ]);
+
+    assert!(cpu.status.contains(StatusFlags::CARRY));
+    assert!(!cpu.status.contains(StatusFlags::ZERO));
+}
+
+#[test]
+fn test_cpy_negative_flag() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA9, 0b0100_0000,
+        0x8D, 0x12, 0x34,
+        0xA0, 0b1100_0000,
+        0xCC, 0x12, 0x34,
+    ]);
+
+    assert!(cpu.status.contains(StatusFlags::NEGATIVE));
+}

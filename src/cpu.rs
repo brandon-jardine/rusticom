@@ -206,6 +206,10 @@ impl CPU {
         self.compare(self.register_x, mode);
     }
 
+    fn cpy(&mut self, mode: &AddressingMode) {
+        self.compare(self.register_y, mode);
+    }
+
     fn lda(&mut self, mode: &AddressingMode) {
         let addr = self.get_operand_address(mode);
         let value = self.mem_read(addr);
@@ -316,6 +320,10 @@ impl CPU {
 
                 0xE0 | 0xE4 | 0xEC => {
                     self.cpx(&opcode.mode);
+                }
+
+                0xC0 | 0xC4 | 0xCC => {
+                    self.cpy(&opcode.mode);
                 }
 
                 0xA9 | 0xA5 | 0xB5 | 0xAD | 0xBD | 0xB9 | 0xA1 | 0xB1 => {
