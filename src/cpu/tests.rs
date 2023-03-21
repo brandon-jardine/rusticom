@@ -76,14 +76,14 @@ fn test_reset() {
     cpu.register_x = 0xff;
     cpu.register_a = 0xff;
     cpu.register_y = 0xff;
-    cpu.register_s = 0x00;
+    cpu.stack_pointer = 0x00;
     cpu.status = StatusFlags::from_bits_truncate(0xFF);
     cpu.reset();
 
     assert_eq!(cpu.register_x, 0);
     assert_eq!(cpu.register_a, 0);
     assert_eq!(cpu.register_y, 0);
-    assert_eq!(cpu.register_s, 0xff);
+    assert_eq!(cpu.stack_pointer, 0xff);
     assert_eq!(cpu.status.bits(), 0);
 }
 
@@ -106,7 +106,7 @@ fn test_txs_move_x_to_s() {
     cpu.register_x = 69;
     cpu.run();
 
-    assert_eq!(cpu.register_s, 69);
+    assert_eq!(cpu.stack_pointer, 69);
 }
 
 #[test]
@@ -155,7 +155,7 @@ fn test_tsx_zero_flag() {
     let mut cpu = CPU::new();
     cpu.load(vec![0xBA, 0x00]);
     cpu.reset();
-    cpu.register_s = 0;
+    cpu.stack_pointer = 0;
     cpu.run();
 
     assert!(cpu.status.contains(StatusFlags::ZERO));
@@ -166,7 +166,7 @@ fn test_tsx_negative_flag() {
     let mut cpu = CPU::new();
     cpu.load(vec![0xBA, 0x00]);
     cpu.reset();
-    cpu.register_s = 0b1000_0010;
+    cpu.stack_pointer = 0b1000_0010;
     cpu.run();
 
     assert!(cpu.status.contains(StatusFlags::NEGATIVE));

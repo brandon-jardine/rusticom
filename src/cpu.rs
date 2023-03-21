@@ -22,7 +22,7 @@ pub struct CPU {
     pub register_a: u8,
     pub register_x: u8,
     pub register_y: u8,
-    pub register_s: u8,
+    pub stack_pointer: u8,
     pub status: StatusFlags,
     pub program_counter: u16,
     memory: [u8; 0xFFFF],
@@ -75,7 +75,7 @@ impl CPU {
             register_a: 0,
             register_x: 0,
             register_y: 0,
-            register_s: 0xff,
+            stack_pointer: 0xff,
             status: StatusFlags::from_bits_truncate(0),
             program_counter: 0,
             memory: [0; 0xFFFF],
@@ -97,7 +97,7 @@ impl CPU {
         self.register_a = 0;
         self.register_x = 0;
         self.register_y = 0;
-        self.register_s = 0xff;
+        self.stack_pointer = 0xff;
         self.status = StatusFlags::from_bits_truncate(0);
 
         self.program_counter = self.mem_read_u16(0xFFFC);
@@ -269,7 +269,7 @@ impl CPU {
     }
 
     fn tsx(&mut self) {
-        self.register_x = self.register_s;
+        self.register_x = self.stack_pointer;
         self.update_zero_and_negative_flags(self.register_x);
     }
 
@@ -279,7 +279,7 @@ impl CPU {
     }
 
     fn txs(&mut self) {
-        self.register_s = self.register_x;
+        self.stack_pointer = self.register_x;
     }
 
     fn tya(&mut self) {
