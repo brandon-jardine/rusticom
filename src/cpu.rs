@@ -157,20 +157,24 @@ impl CPU {
     }
 
     fn asl(&mut self, mode: &AddressingMode) {
-        if matches!(mode, AddressingMode::Implied) {
-            let carry = 0b1000_0000 & self.register_a == 0b1000_0000;
-            self.register_a <<= 1;
-            self.status.set(StatusFlags::CARRY, carry);
+        match mode {
+            AddressingMode::Implied => {
+                let carry = 0b1000_0000 & self.register_a == 0b1000_0000;
+                self.register_a <<= 1;
+                self.status.set(StatusFlags::CARRY, carry);
 
-            self.update_zero_and_negative_flags(self.register_a);
-        } else {
-            let addr = self.get_operand_address(mode);
-            let value = self.mem_read(addr);
-            let carry = value & 0b1000_0000 == 0b1000_0000;
-            self.mem_write(addr, value << 1);
-            self.status.set(StatusFlags::CARRY, carry);
+                self.update_zero_and_negative_flags(self.register_a);
+            },
 
-            self.update_zero_and_negative_flags(self.mem_read(addr));
+            _ => {
+                let addr = self.get_operand_address(mode);
+                let value = self.mem_read(addr);
+                let carry = value & 0b1000_0000 == 0b1000_0000;
+                self.mem_write(addr, value << 1);
+                self.status.set(StatusFlags::CARRY, carry);
+
+                self.update_zero_and_negative_flags(self.mem_read(addr));
+            }
         }
     }
 
