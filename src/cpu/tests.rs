@@ -1111,3 +1111,69 @@ fn test_inc_zero_flag() {
     assert!(cpu.status.contains(StatusFlags::ZERO));
 }
 
+#[test]
+fn test_inx_implied() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA2, 0x70,
+        0xE8,
+    ]);
+
+    assert_eq!(cpu.register_x, 0x71);
+}
+
+#[test]
+fn test_inx_zero_flag() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA2, 0xFF,
+        0xE8,
+    ]);
+
+    assert!(cpu.status.contains(StatusFlags::ZERO));
+}
+
+#[test]
+fn test_inx_negative_flag() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA2, 0x7F,
+        0xE8,
+    ]);
+
+    assert!(cpu.status.contains(StatusFlags::NEGATIVE));
+}
+
+#[test]
+fn test_iny_implied() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA0, 0x70,
+        0xC8,
+    ]);
+
+    assert_eq!(cpu.register_y, 0x71);
+}
+
+#[test]
+fn test_iny_zero_flag() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA0, 0xFF,
+        0xC8,
+    ]);
+
+    assert!(cpu.status.contains(StatusFlags::ZERO));
+}
+
+#[test]
+fn test_iny_negative_flag() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA0, 0x7F,
+        0xC8,
+    ]);
+
+    assert!(cpu.status.contains(StatusFlags::NEGATIVE));
+}
+

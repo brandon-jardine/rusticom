@@ -300,6 +300,11 @@ impl CPU {
         self.update_zero_and_negative_flags(self.register_x);
     }
 
+    fn iny(&mut self) {
+        self.register_y = self.register_y.wrapping_add(1);
+        self.update_zero_and_negative_flags(self.register_y);
+    }
+
     fn sta(&mut self, mode: &AddressingMode) {
         let addr = self.get_operand_address(mode);
         self.mem_write(addr, self.register_a);
@@ -430,6 +435,7 @@ impl CPU {
                 0x78 => self.status.set(StatusFlags::INTERRUPT_DISABLE, true),
 
                 0xE8 => self.inx(),
+                0xC8 => self.iny(),
 
                 0xAA => self.tax(),
                 0xA8 => self.tay(),
