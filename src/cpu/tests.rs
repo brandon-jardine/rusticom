@@ -970,3 +970,37 @@ fn test_dex_negative_flag() {
     assert!(cpu.status.contains(StatusFlags::NEGATIVE));
 }
 
+#[test]
+fn test_dey_implied() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA0, 0x70,
+        0x88,
+    ]);
+
+    assert_eq!(cpu.register_y, 0x6F);
+}
+
+#[test]
+fn test_dey_zero_flag() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA0, 0x01,
+        0x88,
+    ]);
+
+    assert!(cpu.status.contains(StatusFlags::ZERO));
+}
+
+#[test]
+fn test_dey_negative_flag() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA0, 0x01,
+        0x88,
+        0x88,
+    ]);
+
+    assert!(cpu.status.contains(StatusFlags::NEGATIVE));
+}
+

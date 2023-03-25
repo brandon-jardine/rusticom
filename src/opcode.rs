@@ -71,6 +71,7 @@ lazy_static! {
         OpCode::new(0xDE, "DEC", 3, 7, AddressingMode::Absolute_X),
 
         OpCode::new(0xCA, "DEX", 1, 2, AddressingMode::Implied),
+        OpCode::new(0x88, "DEY", 1, 2, AddressingMode::Implied),
 
         OpCode::new(0xE8, "INX", 1, 2, AddressingMode::Implied),
 
