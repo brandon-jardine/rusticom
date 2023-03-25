@@ -232,6 +232,14 @@ impl CPU {
         self.compare(self.register_y, mode);
     }
 
+    fn dec(&mut self, mode: &AddressingMode) {
+        let address = self.get_operand_address(mode);
+        let value = self.mem_read(address).wrapping_sub(1);
+
+        self.mem_write(address, value);
+        self.update_zero_and_negative_flags(value);
+    }
+
     fn lda(&mut self, mode: &AddressingMode) {
         let addr = self.get_operand_address(mode);
         let value = self.mem_read(addr);
@@ -346,6 +354,10 @@ impl CPU {
 
                 0xC0 | 0xC4 | 0xCC => {
                     self.cpy(&opcode.mode);
+                }
+
+                0xC6 | 0xD6 | 0xCE | 0xDE => {
+                    self.dec(&opcode.mode);
                 }
 
                 0xA9 | 0xA5 | 0xB5 | 0xAD | 0xBD | 0xB9 | 0xA1 | 0xB1 => {

@@ -861,3 +861,78 @@ fn test_lsr_absolute_x() {
 
     assert_eq!(cpu.memory[0x3034], 0b0001_1000);
 }
+
+#[test]
+fn test_dec_zero_page() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA9, 0x43,
+        0x85, 0x22,
+        0xC6, 0x22,
+    ]);
+
+    assert_eq!(cpu.memory[0x0022], 0x42);
+}
+
+#[test]
+fn test_dec_zero_page_x() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA9, 0x43,
+        0x85, 0x35,
+        0xA2, 0x02,
+        0xD6, 0x33,
+    ]);
+
+    assert_eq!(cpu.memory[0x0035], 0x42);
+}
+
+#[test]
+fn test_dec_absolute() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA9, 0x43,
+        0x8D, 0x69, 0x69,
+        0xCE, 0x69, 0x69,
+    ]);
+
+    assert_eq!(cpu.memory[0x6969], 0x42);
+}
+
+#[test]
+fn test_dec_absolute_x() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA9, 0x43,
+        0x8D, 0x45, 0x45,
+        0xA2, 0x05,
+        0xDE, 0x40, 0x45,
+    ]);
+
+    assert_eq!(cpu.memory[0x4545], 0x42);
+}
+
+#[test]
+fn test_dec_negative_flag() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA9, 0x00,
+        0x85, 0x69,
+        0xC6, 0x69,
+    ]);
+
+    assert!(cpu.status.contains(StatusFlags::NEGATIVE));
+}
+
+#[test]
+fn test_dec_zero_flag() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA9, 0x01,
+        0x85, 0x69,
+        0xC6, 0x69,
+    ]);
+
+    assert!(cpu.status.contains(StatusFlags::ZERO));
+}
+
