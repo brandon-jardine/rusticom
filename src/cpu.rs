@@ -266,6 +266,16 @@ impl CPU {
         self.update_zero_and_negative_flags(value);
     }
 
+    fn inx(&mut self) {
+        self.register_x = self.register_x.wrapping_add(1);
+        self.update_zero_and_negative_flags(self.register_x);
+    }
+
+    fn iny(&mut self) {
+        self.register_y = self.register_y.wrapping_add(1);
+        self.update_zero_and_negative_flags(self.register_y);
+    }
+
     fn lda(&mut self, mode: &AddressingMode) {
         let addr = self.get_operand_address(mode);
         let value = self.mem_read(addr);
@@ -290,19 +300,17 @@ impl CPU {
         self.update_zero_and_negative_flags(self.register_y);
     }
 
+    fn ora(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        let value = self.mem_read(addr);
+
+        self.register_a = self.register_a | value;
+        self.update_zero_and_negative_flags(self.register_a);
+    }
+
     fn tax(&mut self) {
         self.register_x = self.register_a;
         self.update_zero_and_negative_flags(self.register_x);
-    }
-
-    fn inx(&mut self) {
-        self.register_x = self.register_x.wrapping_add(1);
-        self.update_zero_and_negative_flags(self.register_x);
-    }
-
-    fn iny(&mut self) {
-        self.register_y = self.register_y.wrapping_add(1);
-        self.update_zero_and_negative_flags(self.register_y);
     }
 
     fn sta(&mut self, mode: &AddressingMode) {
@@ -402,6 +410,9 @@ impl CPU {
                     self.inc(&opcode.mode);
                 },
 
+                0xE8 => self.inx(),
+                0xC8 => self.iny(),
+
                 0xA9 | 0xA5 | 0xB5 | 0xAD | 0xBD | 0xB9 | 0xA1 | 0xB1 => {
                     self.lda(&opcode.mode);
                 },
@@ -416,6 +427,14 @@ impl CPU {
 
                 0x4A | 0x46 | 0x56 | 0x4E | 0x5E => {
                     self.lsr(&opcode.mode);
+                },
+
+                0xEA => {
+                    // NOP
+                },
+
+                0x09 | 0x05 | 0x15 | 0x0D | 0x1D | 0x19 | 0x01 | 0x11 => {
+                    self.ora(&opcode.mode);
                 },
 
                 0x85 | 0x95 | 0x8D | 0x9D | 0x99 | 0x81 | 0x91 => {
@@ -433,9 +452,6 @@ impl CPU {
                 0x38 => self.status.set(StatusFlags::CARRY, true),
                 0xF8 => self.status.set(StatusFlags::DECIMAL_MODE, true),
                 0x78 => self.status.set(StatusFlags::INTERRUPT_DISABLE, true),
-
-                0xE8 => self.inx(),
-                0xC8 => self.iny(),
 
                 0xAA => self.tax(),
                 0xA8 => self.tay(),

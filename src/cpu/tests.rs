@@ -59,18 +59,6 @@ fn test_5_ops_working_together() {
 }
 
 #[test]
-fn test_inx_overflow() {
-    let mut cpu = CPU::new();
-
-    cpu.load(vec![0xe8, 0xe8, 0x00]);
-    cpu.reset();
-    cpu.register_x = 0xff;
-    cpu.run();
-
-    assert_eq!(cpu.register_x, 1)
-}
-
-#[test]
 fn test_reset() {
     let mut cpu = CPU::new();
     cpu.register_x = 0xff;
@@ -1145,6 +1133,18 @@ fn test_inx_negative_flag() {
 }
 
 #[test]
+fn test_inx_overflow() {
+    let mut cpu = CPU::new();
+
+    cpu.load(vec![0xe8, 0xe8, 0x00]);
+    cpu.reset();
+    cpu.register_x = 0xff;
+    cpu.run();
+
+    assert_eq!(cpu.register_x, 1)
+}
+
+#[test]
 fn test_iny_implied() {
     let mut cpu = CPU::new();
     cpu.load_and_run(vec![
@@ -1172,6 +1172,40 @@ fn test_iny_negative_flag() {
     cpu.load_and_run(vec![
         0xA0, 0x7F,
         0xC8,
+    ]);
+
+    assert!(cpu.status.contains(StatusFlags::NEGATIVE));
+}
+
+#[test]
+fn test_ora_immediate() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA9, 0b0101_1010,
+        0x09, 0b0010_0101,
+    ]);
+
+    assert_eq!(cpu.register_a, 0b0111_1111);
+}
+
+#[test]
+fn test_ora_zero_flag() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA9, 0b0000_0000,
+        0x09, 0b0000_0000,
+    ]);
+
+    assert_eq!(cpu.register_a, 0);
+    assert!(cpu.status.contains(StatusFlags::ZERO));
+}
+
+#[test]
+fn test_ora_negative_flag() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA9, 0b0000_0000,
+        0x09, 0b1000_1010,
     ]);
 
     assert!(cpu.status.contains(StatusFlags::NEGATIVE));
