@@ -936,3 +936,37 @@ fn test_dec_zero_flag() {
     assert!(cpu.status.contains(StatusFlags::ZERO));
 }
 
+#[test]
+fn test_dex_implied() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA2, 0x70,
+        0xCA,
+    ]);
+
+    assert_eq!(cpu.register_x, 0x6F);
+}
+
+#[test]
+fn test_dex_zero_flag() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA2, 0x01,
+        0xCA,
+    ]);
+
+    assert!(cpu.status.contains(StatusFlags::ZERO));
+}
+
+#[test]
+fn test_dex_negative_flag() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA2, 0x01,
+        0xCA,
+        0xCA,
+    ]);
+
+    assert!(cpu.status.contains(StatusFlags::NEGATIVE));
+}
+
