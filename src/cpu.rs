@@ -233,10 +233,10 @@ impl CPU {
     }
 
     fn dec(&mut self, mode: &AddressingMode) {
-        let address = self.get_operand_address(mode);
-        let value = self.mem_read(address).wrapping_sub(1);
+        let addr = self.get_operand_address(mode);
+        let value = self.mem_read(addr).wrapping_sub(1);
 
-        self.mem_write(address, value);
+        self.mem_write(addr, value);
         self.update_zero_and_negative_flags(value);
     }
 
@@ -256,6 +256,14 @@ impl CPU {
 
         self.register_a = self.register_a ^ value;
         self.update_zero_and_negative_flags(self.register_a);
+    }
+
+    fn inc(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        let value = self.mem_read(addr).wrapping_add(1);
+
+        self.mem_write(addr, value);
+        self.update_zero_and_negative_flags(value);
     }
 
     fn lda(&mut self, mode: &AddressingMode) {
@@ -364,26 +372,30 @@ impl CPU {
 
                 0xC9 | 0xC5 | 0xD5 | 0xCD | 0xDD | 0xD9 | 0xC1 | 0xD1 => {
                     self.cmp(&opcode.mode);
-                }
+                },
 
                 0xE0 | 0xE4 | 0xEC => {
                     self.cpx(&opcode.mode);
-                }
+                },
 
                 0xC0 | 0xC4 | 0xCC => {
                     self.cpy(&opcode.mode);
-                }
+                },
 
                 0xC6 | 0xD6 | 0xCE | 0xDE => {
                     self.dec(&opcode.mode);
-                }
+                },
 
                 0xCA => self.dex(),
                 0x88 => self.dey(),
 
                 0x49 | 0x45 | 0x55 | 0x4D | 0x5D | 0x59 | 0x41 | 0x51 => {
                     self.eor(&opcode.mode);
-                }
+                },
+
+                0xE6 | 0xF6 | 0xEE | 0xFE => {
+                    self.inc(&opcode.mode);
+                },
 
                 0xA9 | 0xA5 | 0xB5 | 0xAD | 0xBD | 0xB9 | 0xA1 | 0xB1 => {
                     self.lda(&opcode.mode);
