@@ -308,6 +308,29 @@ impl CPU {
         self.update_zero_and_negative_flags(self.register_a);
     }
 
+    fn rol(&mut self, mode: &AddressingMode) {
+        let carry = self.register_a & 0b1000_0000 == 0b1000_0000;
+        
+        match mode {
+            AddressingMode::Implied => {
+                self.register_a <<= 1;
+                self.register_a |= self.status.bits & StatusFlags::CARRY.bits;
+                self.update_zero_and_negative_flags(self.register_a);
+            },
+
+            _ => {
+                let addr = self.get_operand_address(mode);
+                let mut value = self.mem_read(addr);
+                value <<= 1;
+                value |= self.status.bits & StatusFlags::CARRY.bits;
+                self.mem_write(addr, value);
+                self.update_zero_and_negative_flags(value);
+            },
+        }
+
+        self.status.set(StatusFlags::CARRY, carry);
+    }
+
     fn tax(&mut self) {
         self.register_x = self.register_a;
         self.update_zero_and_negative_flags(self.register_x);
@@ -435,6 +458,10 @@ impl CPU {
 
                 0x09 | 0x05 | 0x15 | 0x0D | 0x1D | 0x19 | 0x01 | 0x11 => {
                     self.ora(&opcode.mode);
+                },
+
+                0x2A | 0x26 | 0x36 | 0x2E | 0x3E => {
+                    self.rol(&opcode.mode);
                 },
 
                 0x85 | 0x95 | 0x8D | 0x9D | 0x99 | 0x81 | 0x91 => {

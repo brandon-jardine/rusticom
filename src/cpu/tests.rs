@@ -1211,3 +1211,61 @@ fn test_ora_negative_flag() {
     assert!(cpu.status.contains(StatusFlags::NEGATIVE));
 }
 
+#[test]
+fn test_rol_accumulator() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA9, 0b0101_0111,
+        0x2A,
+    ]);
+
+    assert_eq!(cpu.register_a, 0b1010_1110);
+}
+
+#[test]
+fn test_rol_absolute() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA9, 0b0101_0111,
+        0x8D, 0x38, 0x0D,
+        0xA9, 0b0101_0111,
+        0x2E, 0x38, 0x0D,
+    ]);
+
+    assert_eq!(cpu.memory[0x0D38], 0b1010_1110);
+}
+
+#[test]
+fn test_rol_carry_flag() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA9, 0b1100_1100,
+        0x2A,
+        0x2A,
+    ]);
+
+    assert!(cpu.status.contains(StatusFlags::CARRY));
+    assert!(cpu.register_a & 0b0000_0001 == 1);
+}
+
+#[test]
+fn test_rol_zero_flag() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA9, 0b1000_0000,
+        0x2A,
+    ]);
+
+    assert!(cpu.status.contains(StatusFlags::ZERO));
+}
+
+#[test]
+fn test_rol_negative_flag() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA9, 0b0100_0000,
+        0x2A,
+    ]);
+
+    assert!(cpu.status.contains(StatusFlags::NEGATIVE));
+}
