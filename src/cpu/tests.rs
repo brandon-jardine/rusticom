@@ -1004,3 +1004,36 @@ fn test_dey_negative_flag() {
     assert!(cpu.status.contains(StatusFlags::NEGATIVE));
 }
 
+#[test]
+fn test_eor_immediate() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA9, 0b0110_1001,
+        0x49, 0b1111_0000,
+    ]);
+
+    assert_eq!(cpu.register_a, 0b1001_1001);
+}
+
+#[test]
+fn test_eor_zero_flag() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA9, 0b1111_1111,
+        0x49, 0b1111_1111,
+    ]);
+
+    assert!(cpu.status.contains(StatusFlags::ZERO));
+}
+
+#[test]
+fn test_eor_negative_flag() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA9, 0b1111_1111,
+        0x49, 0b0101_1111,
+    ]);
+
+    assert!(cpu.status.contains(StatusFlags::NEGATIVE));
+}
+
