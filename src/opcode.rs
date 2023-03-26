@@ -160,6 +160,8 @@ lazy_static! {
         OpCode::new(0x8A, "TXA", 1, 2, AddressingMode::Implied),
         OpCode::new(0x9A, "TXS", 1, 2, AddressingMode::Implied),
         OpCode::new(0x98, "TYA", 1, 2, AddressingMode::Implied),
+
+        OpCode::new(0x48, "PHA", 1, 3, AddressingMode::Implied),
     ];
 
     pub static ref OPCODES_MAP: HashMap<u8, &'static OpCode> = {

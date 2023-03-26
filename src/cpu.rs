@@ -374,6 +374,11 @@ impl CPU {
         self.update_zero_and_negative_flags(self.register_a);
     }
 
+    fn pha(&mut self) {
+        self.mem_write(self.stack_pointer as u16 + 0x0100u16, self.register_a);
+        self.stack_pointer = self.stack_pointer.wrapping_sub(1);
+    }
+
     fn update_zero_and_negative_flags(&mut self, result: u8) {
         self.status.set(StatusFlags::ZERO, result == 0);
         self.status.set(StatusFlags::NEGATIVE, result & 0b1000_0000 != 0);
@@ -486,8 +491,10 @@ impl CPU {
                 0x9A => self.txs(),
                 0x98 => self.tya(),
 
-                0x00 => return,         // BRK
-                _ => todo!()
+                0x48 => self.pha(),
+
+                0x00 => return, // BRK
+                _ => todo!(),
             }
 
             if program_counter_state == self.program_counter {

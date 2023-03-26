@@ -1262,10 +1262,32 @@ fn test_rol_zero_flag() {
 #[test]
 fn test_rol_negative_flag() {
     let mut cpu = CPU::new();
-    cpu.load_and_run(vec![
-        0xA9, 0b0100_0000,
-        0x2A,
-    ]);
+    cpu.load_and_run(vec![0xA9, 0b0100_0000, 0x2A]);
 
     assert!(cpu.status.contains(StatusFlags::NEGATIVE));
+}
+
+#[test]
+fn test_pha_after_reset() {
+    let mut cpu = CPU::new();
+    cpu.load(vec![0x48, 0x00]);
+    cpu.reset();
+    cpu.register_a = 0xDE;
+    cpu.run();
+
+    assert_eq!(cpu.stack_pointer, 0xFE);
+    assert_eq!(cpu.memory[cpu.stack_pointer as usize + 0x0100 + 1], 0xDE);
+}
+
+#[test]
+fn test_pha_stack_overflow() {
+    let mut cpu = CPU::new();
+    cpu.load(vec![0x48, 0x00]);
+    cpu.reset();
+    cpu.register_a = 0xAD;
+    cpu.stack_pointer = 0;
+    cpu.run();
+
+    assert_eq!(cpu.stack_pointer, 0xFF);
+    assert_eq!(cpu.memory[0x0100], 0xAD);
 }
