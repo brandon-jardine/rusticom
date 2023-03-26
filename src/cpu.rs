@@ -375,7 +375,8 @@ impl CPU {
     }
 
     fn pha(&mut self) {
-        self.mem_write(self.stack_pointer as u16 + 0x0100u16, self.register_a);
+        let addr = u16::from_le_bytes([self.stack_pointer, 0x01]);
+        self.mem_write(addr, self.register_a);
         self.stack_pointer = self.stack_pointer.wrapping_sub(1);
     }
 

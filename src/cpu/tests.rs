@@ -1276,7 +1276,9 @@ fn test_pha_after_reset() {
     cpu.run();
 
     assert_eq!(cpu.stack_pointer, 0xFE);
-    assert_eq!(cpu.memory[cpu.stack_pointer as usize + 0x0100 + 1], 0xDE);
+
+    let addr = u16::from_le_bytes([cpu.stack_pointer + 1, 0x01]);
+    assert_eq!(cpu.memory[addr as usize], 0xDE);
 }
 
 #[test]
