@@ -1533,7 +1533,32 @@ fn test_bvc_dont_branch() {
     cpu.status.set(StatusFlags::OVERFLOW, true);
     cpu.run();
 
-    println!("flags: {}", cpu.status.bits);
+    assert_eq!(cpu.program_counter, 0x8003);
+}
+
+#[test]
+fn test_bvs_branch() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0x70, 0x06,
+    ]);
+    cpu.reset();
+    cpu.status.set(StatusFlags::OVERFLOW, true);
+    cpu.run();
+
+    assert_eq!(cpu.program_counter, 0x8008);
+}
+
+#[test]
+fn test_bvs_dont_branch() {
+    let mut cpu = CPU::new();
+    cpu.load(vec![
+        0x70, 0x06,
+    ]);
+    cpu.reset();
+    cpu.status.set(StatusFlags::OVERFLOW, false);
+    cpu.run();
+
     assert_eq!(cpu.program_counter, 0x8003);
 }
 
