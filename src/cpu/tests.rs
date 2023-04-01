@@ -1488,3 +1488,25 @@ fn test_bne_dont_branch() {
     assert_eq!(cpu.program_counter, 0x8005);
 }
 
+#[test]
+fn test_bpl_branch() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA9, 0b0101_1010,
+        0x10, 0x06,
+    ]);
+
+    assert_eq!(cpu.program_counter, 0x800A);
+}
+
+#[test]
+fn test_bpl_dont_branch() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA9, 0b1101_1010,
+        0x10, 0x06,
+    ]);
+
+    assert_eq!(cpu.program_counter, 0x8005);
+}
+

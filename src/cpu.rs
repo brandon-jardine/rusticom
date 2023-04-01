@@ -223,6 +223,13 @@ impl CPU {
         }
     }
 
+    fn bpl(&mut self, mode: &AddressingMode) {
+        if !self.status.contains(StatusFlags::NEGATIVE) {
+            let offset = self.mem_read(self.get_operand_address(mode));
+            self.program_counter = self.program_counter.wrapping_add(offset as u16);
+        }
+    }
+
     fn bit(&mut self, mode: &AddressingMode) {
         let addr = self.get_operand_address(mode);
         let value = self.mem_read(addr);
@@ -486,6 +493,7 @@ impl CPU {
                 0xB0 => self.bcs(&opcode.mode),
                 0x30 => self.bmi(&opcode.mode),
                 0xD0 => self.bne(&opcode.mode),
+                0x10 => self.bpl(&opcode.mode),
 
                 0x24 | 0x2C => self.bit(&opcode.mode),
 
