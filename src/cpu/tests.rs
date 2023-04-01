@@ -1444,3 +1444,25 @@ fn test_bcs_dont_branch() {
     assert_eq!(cpu.program_counter, 0x8004);
 }
 
+#[test]
+fn test_bmi_branch() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA9, 0b1100_0000,
+        0x30, 0x06,
+    ]);
+
+    assert_eq!(cpu.program_counter, 0x800A);
+}
+
+#[test]
+fn test_bmi_dont_branch() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA9, 0b0111_1111,
+        0x30, 0x06,
+    ]);
+
+    assert_eq!(cpu.program_counter, 0x8005);
+}
+
