@@ -128,6 +128,9 @@ lazy_static! {
         OpCode::new(0x01, "ORA", 2, 6, AddressingMode::Indirect_X),
         OpCode::new(0x11, "ORA", 2, 5 /* +1 if page crossed */, AddressingMode::Indirect_Y),
 
+        OpCode::new(0x48, "PHA", 1, 3, AddressingMode::Implied),
+        OpCode::new(0x08, "PHP", 1, 3, AddressingMode::Implied),
+
         OpCode::new(0x2A, "ROL", 1, 2, AddressingMode::Implied),
         OpCode::new(0x26, "ROL", 2, 5, AddressingMode::ZeroPage),
         OpCode::new(0x36, "ROL", 2, 6, AddressingMode::ZeroPage_X),
@@ -160,8 +163,6 @@ lazy_static! {
         OpCode::new(0x8A, "TXA", 1, 2, AddressingMode::Implied),
         OpCode::new(0x9A, "TXS", 1, 2, AddressingMode::Implied),
         OpCode::new(0x98, "TYA", 1, 2, AddressingMode::Implied),
-
-        OpCode::new(0x48, "PHA", 1, 3, AddressingMode::Implied),
     ];
 
     pub static ref OPCODES_MAP: HashMap<u8, &'static OpCode> = {
@@ -172,3 +173,4 @@ lazy_static! {
         map
     };
 }
+

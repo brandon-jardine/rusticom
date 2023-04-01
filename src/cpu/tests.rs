@@ -1293,3 +1293,15 @@ fn test_pha_stack_overflow() {
     assert_eq!(cpu.stack_pointer, 0xFF);
     assert_eq!(cpu.memory[0x0100], 0xAD);
 }
+
+#[test]
+fn test_php_push_stack() {
+    let mut cpu = CPU::new();
+    cpu.load(vec![0x08, 0x00]);
+    cpu.reset();
+    cpu.status = StatusFlags::from_bits_truncate(0b0101_1010);
+    cpu.run();
+
+    assert_eq!(cpu.memory[0x01ff], cpu.status.bits());
+}
+

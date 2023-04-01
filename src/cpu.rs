@@ -374,9 +374,9 @@ impl CPU {
         self.update_zero_and_negative_flags(self.register_a);
     }
 
-    fn pha(&mut self) {
+    fn stack_push(&mut self, data: u8) {
         let addr = u16::from_le_bytes([self.stack_pointer, 0x01]);
-        self.mem_write(addr, self.register_a);
+        self.mem_write(addr, data);
         self.stack_pointer = self.stack_pointer.wrapping_sub(1);
     }
 
@@ -465,6 +465,9 @@ impl CPU {
                     self.ora(&opcode.mode);
                 },
 
+                0x48 => self.stack_push(self.register_a), // pha
+                0x08 => self.stack_push(self.status.bits()), // php
+                
                 0x2A | 0x26 | 0x36 | 0x2E | 0x3E => {
                     self.rol(&opcode.mode);
                 },
@@ -492,8 +495,6 @@ impl CPU {
                 0x9A => self.txs(),
                 0x98 => self.tya(),
 
-                0x48 => self.pha(),
-
                 0x00 => return, // BRK
                 _ => todo!(),
             }
@@ -504,3 +505,4 @@ impl CPU {
         }
     }
 }
+
