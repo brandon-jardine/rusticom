@@ -308,10 +308,12 @@ impl CPU {
     }
 
     fn rol(&mut self, mode: &AddressingMode) {
-        let carry = self.register_a & 0b1000_0000 == 0b1000_0000;
-        
+        let carry: bool;
+
         match mode {
             AddressingMode::Implied => {
+                carry = self.register_a & 0b1000_0000 == 0b1000_0000;
+
                 self.register_a <<= 1;
                 self.register_a |= self.status.bits & StatusFlags::CARRY.bits;
                 self.update_zero_and_negative_flags(self.register_a);
@@ -320,11 +322,44 @@ impl CPU {
             _ => {
                 let addr = self.get_operand_address(mode);
                 let mut value = self.mem_read(addr);
+                carry = value & 0b1000_0000 == 0b1000_0000;
+
                 value <<= 1;
                 value |= self.status.bits & StatusFlags::CARRY.bits;
                 self.mem_write(addr, value);
                 self.update_zero_and_negative_flags(value);
             },
+        }
+
+        self.status.set(StatusFlags::CARRY, carry);
+    }
+
+    fn ror(&mut self, mode: &AddressingMode) {
+        let carry: bool;
+
+        match mode {
+            AddressingMode::Implied => {
+                carry = self.register_a & 1 == 1;
+
+                self.register_a >>= 1;
+                
+                if self.status.contains(StatusFlags::CARRY) {
+                    self.register_a |= 0b1000_0000;
+                }
+
+                self.update_zero_and_negative_flags(self.register_a);
+            },
+
+            _ => {
+                let addr = self.get_operand_address(mode);
+                let mut value = self.mem_read(addr);
+                carry = value & 1 == 1;
+
+                value >>= 1;
+                value |= self.status.bits & 0b1000_0000;
+                self.mem_write(addr, value);
+                self.update_zero_and_negative_flags(value);
+            }
         }
 
         self.status.set(StatusFlags::CARRY, carry);
@@ -487,6 +522,10 @@ impl CPU {
                 
                 0x2A | 0x26 | 0x36 | 0x2E | 0x3E => {
                     self.rol(&opcode.mode);
+                },
+
+                0x6A | 0x66 | 0x76 | 0x6E | 0x7E => {
+                    self.ror(&opcode.mode);
                 },
 
                 0x85 | 0x95 | 0x8D | 0x9D | 0x99 | 0x81 | 0x91 => {

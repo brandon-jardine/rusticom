@@ -1344,3 +1344,60 @@ fn test_plp_pull_flags() {
     assert_eq!(cpu.status.bits(), 0b1111_1111);
 }
 
+#[test]
+fn test_ror_accumulator() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA9, 0b0101_0111,
+        0x6A,
+    ]);
+
+    assert_eq!(cpu.register_a, 0b0010_1011);
+}
+
+#[test]
+fn test_ror_absolute() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA9, 0b0101_0111,
+        0x8D, 0x38, 0x0D,
+        // 0xA9, 0b0101_0111,
+        0x6E, 0x38, 0x0D,
+    ]);
+
+    assert_eq!(cpu.memory[0x0D38], 0b0010_1011);
+}
+
+#[test]
+fn test_ror_carry_flag() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA9, 0b0000_0011,
+        0x6A,
+        0x6A,
+    ]);
+
+    assert!(cpu.status.contains(StatusFlags::CARRY));
+    assert!(cpu.register_a & 0b1000_0000 == 0b1000_0000);
+}
+
+#[test]
+fn test_ror_zero_flag() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0xA9, 0b0000_0001,
+        0x6A,
+    ]);
+
+    assert!(cpu.status.contains(StatusFlags::ZERO));
+}
+
+#[test]
+fn test_ror_negative_flag() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![0xA9, 0b0000_0001, 0x6A, 0x6A, 0x00]);
+
+    assert!(cpu.status.contains(StatusFlags::NEGATIVE));
+}
+
+
