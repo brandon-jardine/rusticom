@@ -1510,3 +1510,30 @@ fn test_bpl_dont_branch() {
     assert_eq!(cpu.program_counter, 0x8005);
 }
 
+#[test]
+fn test_bvc_branch() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0x50, 0x06,
+    ]);
+    cpu.reset();
+    cpu.status.set(StatusFlags::OVERFLOW, false);
+    cpu.run();
+
+    assert_eq!(cpu.program_counter, 0x8008);
+}
+
+#[test]
+fn test_bvc_dont_branch() {
+    let mut cpu = CPU::new();
+    cpu.load(vec![
+        0x50, 0x06,
+    ]);
+    cpu.reset();
+    cpu.status.set(StatusFlags::OVERFLOW, true);
+    cpu.run();
+
+    println!("flags: {}", cpu.status.bits);
+    assert_eq!(cpu.program_counter, 0x8003);
+}
+
