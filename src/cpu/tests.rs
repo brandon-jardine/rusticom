@@ -1331,3 +1331,16 @@ fn test_pla_zero_flag() {
     assert!(cpu.status.contains(StatusFlags::ZERO));
 }
 
+#[test]
+fn test_plp_pull_flags() {
+    let mut cpu = CPU::new();
+    cpu.load(vec![0x28, 0x00]);
+    cpu.reset();
+    cpu.status = StatusFlags::empty();
+    cpu.memory[0x1ff] = 0b1111_1111;
+    cpu.stack_pointer = 0xfe;
+    cpu.run();
+
+    assert_eq!(cpu.status.bits(), 0b1111_1111);
+}
+

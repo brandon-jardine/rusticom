@@ -131,6 +131,7 @@ lazy_static! {
         OpCode::new(0x48, "PHA", 1, 3, AddressingMode::Implied),
         OpCode::new(0x08, "PHP", 1, 3, AddressingMode::Implied),
         OpCode::new(0x68, "PLA", 1, 4, AddressingMode::Implied),
+        OpCode::new(0x28, "PLP", 1, 4, AddressingMode::Implied),
 
         OpCode::new(0x2A, "ROL", 1, 2, AddressingMode::Implied),
         OpCode::new(0x26, "ROL", 2, 5, AddressingMode::ZeroPage),

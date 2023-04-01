@@ -391,6 +391,10 @@ impl CPU {
         self.update_zero_and_negative_flags(self.register_a);
     }
 
+    fn plp(&mut self) {
+        self.status = StatusFlags::from_bits_truncate(self.stack_pull());
+    }
+
     fn update_zero_and_negative_flags(&mut self, result: u8) {
         self.status.set(StatusFlags::ZERO, result == 0);
         self.status.set(StatusFlags::NEGATIVE, result & 0b1000_0000 != 0);
@@ -478,7 +482,8 @@ impl CPU {
 
                 0x48 => self.stack_push(self.register_a), // PHA
                 0x08 => self.stack_push(self.status.bits()), // PHP
-                0x68 => self.pla(), // PLA
+                0x68 => self.pla(),
+                0x28 => self.plp(),
                 
                 0x2A | 0x26 | 0x36 | 0x2E | 0x3E => {
                     self.rol(&opcode.mode);
