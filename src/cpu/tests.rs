@@ -1305,3 +1305,29 @@ fn test_php_push_stack() {
     assert_eq!(cpu.memory[0x01ff], cpu.status.bits());
 }
 
+#[test]
+fn test_pla_negative_flag() {
+    let mut cpu = CPU::new();
+    cpu.load(vec![0x68, 0x00]);
+    cpu.reset();
+    cpu.memory[0x1ff] = 0b1010_1111;
+    cpu.stack_pointer = 0xfe;
+    cpu.run();
+
+    assert_eq!(cpu.register_a, 0b1010_1111);
+    assert!(cpu.status.contains(StatusFlags::NEGATIVE));
+}
+
+#[test]
+fn test_pla_zero_flag() {
+    let mut cpu = CPU::new();
+    cpu.load(vec![0x68, 0x00]);
+    cpu.reset();
+    cpu.register_a = 0b1111_1111;
+    cpu.memory[0x1ff] = 0b0000_0000;
+    cpu.run();
+
+    assert_eq!(cpu.register_a, 0);
+    assert!(cpu.status.contains(StatusFlags::ZERO));
+}
+
