@@ -1400,4 +1400,25 @@ fn test_ror_negative_flag() {
     assert!(cpu.status.contains(StatusFlags::NEGATIVE));
 }
 
+#[test]
+fn test_bcc_branch() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0x38,       // SEC
+        0x90, 0x06, // BCC 0x10
+    ]);
+
+    assert_eq!(cpu.program_counter, 0x8009);
+}
+
+#[test]
+fn test_bcc_dont_branch() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0x18,       // CLC
+        0x90, 0x06, // BCC 0x10
+    ]);
+
+    assert_eq!(cpu.program_counter, 0x8004);
+}
 

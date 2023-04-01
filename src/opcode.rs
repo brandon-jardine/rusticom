@@ -38,6 +38,8 @@ lazy_static! {
         OpCode::new(0x0E, "ASL", 3, 6, AddressingMode::Absolute),
         OpCode::new(0x1E, "ASL", 3, 7, AddressingMode::Absolute_X),
 
+        OpCode::new(0x90, "BCC", 2, 2 /* +1 if branch succeeds, +2 if to a new page */, AddressingMode::Immediate),
+
         OpCode::new(0x24, "BIT", 2, 3, AddressingMode::ZeroPage),
         OpCode::new(0x2C, "BIT", 3, 4, AddressingMode::Absolute),
 
@@ -145,6 +147,10 @@ lazy_static! {
         OpCode::new(0x6E, "ROR", 3, 6, AddressingMode::Absolute),
         OpCode::new(0x7E, "ROR", 3, 7, AddressingMode::Absolute_X),
 
+        OpCode::new(0x38, "SEC", 1, 2, AddressingMode::Implied),
+        OpCode::new(0xF8, "SED", 1, 2, AddressingMode::Implied),
+        OpCode::new(0x78, "SEI", 1, 2, AddressingMode::Implied),
+
         OpCode::new(0x85, "STA", 2, 3, AddressingMode::ZeroPage),
         OpCode::new(0x95, "STA", 2, 4, AddressingMode::ZeroPage_X),
         OpCode::new(0x8D, "STA", 3, 4, AddressingMode::Absolute),
@@ -153,17 +159,13 @@ lazy_static! {
         OpCode::new(0x81, "STA", 2, 6, AddressingMode::Indirect_X),
         OpCode::new(0x91, "STA", 2, 6, AddressingMode::Indirect_Y),
 
+        OpCode::new(0x86, "STX", 2, 3, AddressingMode::ZeroPage),
+        OpCode::new(0x96, "STX", 2, 4, AddressingMode::ZeroPage_Y),
+        OpCode::new(0x8E, "STX", 3, 4, AddressingMode::Absolute),
+
         OpCode::new(0x84, "STY", 2, 3, AddressingMode::ZeroPage),
         OpCode::new(0x94, "STY", 2, 4, AddressingMode::ZeroPage_X),
         OpCode::new(0x8C, "STY", 3, 4, AddressingMode::Absolute),
-
-        OpCode::new(0x86, "STY", 2, 3, AddressingMode::ZeroPage),
-        OpCode::new(0x96, "STY", 2, 4, AddressingMode::ZeroPage_Y),
-        OpCode::new(0x8E, "STY", 3, 4, AddressingMode::Absolute),
-
-        OpCode::new(0x38, "SEC", 1, 2, AddressingMode::Implied),
-        OpCode::new(0xF8, "SED", 1, 2, AddressingMode::Implied),
-        OpCode::new(0x78, "SEI", 1, 2, AddressingMode::Implied),
 
         OpCode::new(0xAA, "TAX", 1, 2, AddressingMode::Implied),
         OpCode::new(0xA8, "TAY", 1, 2, AddressingMode::Implied),
