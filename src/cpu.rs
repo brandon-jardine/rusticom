@@ -196,7 +196,7 @@ impl CPU {
     }
 
     fn bcc(&mut self, mode: &AddressingMode) {
-        if self.status.contains(StatusFlags::CARRY) {
+        if !self.status.contains(StatusFlags::CARRY) {
             let offset = self.mem_read(self.get_operand_address(mode));
             self.program_counter = self.program_counter.wrapping_add(offset.into());
         }

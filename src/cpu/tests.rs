@@ -1404,7 +1404,7 @@ fn test_ror_negative_flag() {
 fn test_bcc_branch() {
     let mut cpu = CPU::new();
     cpu.load_and_run(vec![
-        0x38,       // SEC
+        0x18,       // CLC
         0x90, 0x06, // BCC 0x10
     ]);
 
@@ -1415,7 +1415,7 @@ fn test_bcc_branch() {
 fn test_bcc_dont_branch() {
     let mut cpu = CPU::new();
     cpu.load_and_run(vec![
-        0x18,       // CLC
+        0x38,       // SEC
         0x90, 0x06, // BCC 0x10
     ]);
 
