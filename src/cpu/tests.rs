@@ -1422,3 +1422,25 @@ fn test_bcc_dont_branch() {
     assert_eq!(cpu.program_counter, 0x8004);
 }
 
+#[test]
+fn test_bcs_branch() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0x38,       // SEC
+        0xB0, 0x06, // BCC 0x10
+    ]);
+
+    assert_eq!(cpu.program_counter, 0x8009);
+}
+
+#[test]
+fn test_bcs_dont_branch() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0x18,       // CLC
+        0xB0, 0x06, // BCC 0x10
+    ]);
+
+    assert_eq!(cpu.program_counter, 0x8004);
+}
+

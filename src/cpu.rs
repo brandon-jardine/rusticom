@@ -202,6 +202,13 @@ impl CPU {
         }
     }
 
+    fn bcs(&mut self, mode: &AddressingMode) {
+        if self.status.contains(StatusFlags::CARRY) {
+            let offset = self.mem_read(self.get_operand_address(mode));
+            self.program_counter = self.program_counter.wrapping_add(offset.into());
+        }
+    }
+
     fn bit(&mut self, mode: &AddressingMode) {
         let addr = self.get_operand_address(mode);
         let value = self.mem_read(addr);
@@ -462,6 +469,7 @@ impl CPU {
                 },
 
                 0x90 => self.bcc(&opcode.mode),
+                0xB0 => self.bcs(&opcode.mode),
 
                 0x24 | 0x2C => self.bit(&opcode.mode),
 
