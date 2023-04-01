@@ -198,21 +198,28 @@ impl CPU {
     fn bcc(&mut self, mode: &AddressingMode) {
         if !self.status.contains(StatusFlags::CARRY) {
             let offset = self.mem_read(self.get_operand_address(mode));
-            self.program_counter = self.program_counter.wrapping_add(offset.into());
+            self.program_counter = self.program_counter.wrapping_add(offset as u16);
         }
     }
 
     fn bcs(&mut self, mode: &AddressingMode) {
         if self.status.contains(StatusFlags::CARRY) {
             let offset = self.mem_read(self.get_operand_address(mode));
-            self.program_counter = self.program_counter.wrapping_add(offset.into());
+            self.program_counter = self.program_counter.wrapping_add(offset as u16);
         }
     }
 
     fn bmi(&mut self, mode: &AddressingMode) {
         if self.status.contains(StatusFlags::NEGATIVE) {
             let offset = self.mem_read(self.get_operand_address(mode));
-            self.program_counter = self.program_counter.wrapping_add(offset.into());
+            self.program_counter = self.program_counter.wrapping_add(offset as u16);
+        }
+    }
+
+    fn bne(&mut self, mode: &AddressingMode) {
+        if !self.status.contains(StatusFlags::ZERO) {
+            let offset = self.mem_read(self.get_operand_address(mode));
+            self.program_counter = self.program_counter.wrapping_add(offset as u16);
         }
     }
 
@@ -478,6 +485,7 @@ impl CPU {
                 0x90 => self.bcc(&opcode.mode),
                 0xB0 => self.bcs(&opcode.mode),
                 0x30 => self.bmi(&opcode.mode),
+                0xD0 => self.bne(&opcode.mode),
 
                 0x24 | 0x2C => self.bit(&opcode.mode),
 
