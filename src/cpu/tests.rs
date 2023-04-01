@@ -1562,3 +1562,30 @@ fn test_bvs_dont_branch() {
     assert_eq!(cpu.program_counter, 0x8003);
 }
 
+#[test]
+fn test_jmp_absolute() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0x4C, 0x69, 0x80,
+        0x00,
+    ]);
+
+    // PC is incremented once when 0x00 is read, so check
+    // is for 1 higher than expected from JMP
+    assert_eq!(cpu.program_counter, 0x806A);
+}
+
+#[test]
+fn test_jmp_indirect() {
+    let mut cpu = CPU::new();
+    cpu.load(vec![
+        0x6C, 0x00, 0x81,
+        0x00,
+    ]);
+    cpu.reset();
+    cpu.mem_write_u16(0x8100, 0x1234);
+    cpu.run();
+
+    assert_eq!(cpu.program_counter, 0x1235);
+}
+

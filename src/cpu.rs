@@ -38,6 +38,7 @@ pub enum AddressingMode {
     Absolute,
     Absolute_X,
     Absolute_Y,
+    Indirect,
     Indirect_X,
     Indirect_Y,
     Implied,
@@ -126,14 +127,31 @@ impl CPU {
                 let base = self.mem_read_u16(self.program_counter);
                 let addr = base.wrapping_add(self.register_y as u16);
                 addr
-            }
+            },
+            AddressingMode::Indirect => {
+                // JMP is the only 6502 instruction to support indirection.
+                // The instruction contains a 16 bit address which identifies
+                // the location of the least significant byte of another 16 bit
+                // memory address which is the real target of the instruction.
+
+                // An original 6502 has does not correctly fetch the target
+                // address if the indirect vector falls on a page boundary
+                // (e.g. $xxFF where xx is any value from $00 to $FF). In this
+                // case fetches the LSB from $xxFF as expected but takes the MSB
+                // from $xx00. This is fixed in some later chips like the 65SC02
+                // so for compatibility always ensure the indirect vector is not
+                // at the end of the page.
+
+                let addr = self.mem_read_u16(self.program_counter);
+                self.mem_read_u16(addr)
+            },
             AddressingMode::Indirect_X => {
                 let base = self.mem_read(self.program_counter);
                 let ptr = base.wrapping_add(self.register_x);
                 let lo = self.mem_read(ptr as u16);
                 let hi = self.mem_read(ptr.wrapping_add(1) as u16);
                 (hi as u16) << 8 | (lo as u16)
-            }
+            },
             AddressingMode::Indirect_Y => {
                 let base = self.mem_read(self.program_counter);
                 let lo = self.mem_read(base as u16);
@@ -141,10 +159,10 @@ impl CPU {
                 let deref_base = (hi as u16) << 8 | (lo as u16);
                 let deref = deref_base.wrapping_add(self.register_y as u16);
                 deref
-            }
+            },
             AddressingMode::Implied => {
                 panic!("mode {:?} is not supported", mode);
-            }
+            },
         }
     }
 
@@ -304,6 +322,12 @@ impl CPU {
 
         self.register_a = self.register_a ^ value;
         self.update_zero_and_negative_flags(self.register_a);
+    }
+
+    fn jmp(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        self.program_counter = addr;
+        println!("pc: {}", self.program_counter);
     }
 
     fn inc(&mut self, mode: &AddressingMode) {
@@ -540,6 +564,8 @@ impl CPU {
                 0x49 | 0x45 | 0x55 | 0x4D | 0x5D | 0x59 | 0x41 | 0x51 => {
                     self.eor(&opcode.mode);
                 },
+
+                0x4C | 0x6C => self.jmp(&opcode.mode),
 
                 0xE6 | 0xF6 | 0xEE | 0xFE => {
                     self.inc(&opcode.mode);
