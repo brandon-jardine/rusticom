@@ -92,6 +92,9 @@ lazy_static! {
 
         OpCode::new(0x4C, "JMP", 3, 3, AddressingMode::Absolute),
         OpCode::new(0x6C, "JMP", 3, 5, AddressingMode::Indirect),
+        
+        OpCode::new(0x20, "JSR", 3, 6, AddressingMode::Absolute),
+        OpCode::new(0x60, "RTS", 1, 6, AddressingMode::Implied),
 
         OpCode::new(0xE6, "INC", 2, 5, AddressingMode::ZeroPage),
         OpCode::new(0xF6, "INC", 2, 6, AddressingMode::ZeroPage_X),

@@ -1589,3 +1589,39 @@ fn test_jmp_indirect() {
     assert_eq!(cpu.program_counter, 0x1235);
 }
 
+#[test]
+fn test_jsr_pc() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0x20, 0x02, 0x40,
+        0x00,
+    ]);
+
+    assert_eq!(cpu.program_counter, 0x4003);
+}
+
+#[test]
+fn test_jsr_stack() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![
+        0x20, 0x02, 0x40,
+        0x00,
+    ]);
+
+    assert_eq!(cpu.mem_read(0x01FF), 0x80);
+    assert_eq!(cpu.mem_read(0x01FE), 0x03);
+}
+
+#[test]
+fn test_rts_pc() {
+    let mut cpu = CPU::new();
+    cpu.load(vec![
+        0x20, 0x02, 0x81,
+    ]);
+    cpu.reset();
+    cpu.memory[0x8102] = 0x60;
+    cpu.run();
+
+    assert_eq!(cpu.program_counter, 0x8004);
+}
+

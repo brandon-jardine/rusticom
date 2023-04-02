@@ -330,6 +330,15 @@ impl CPU {
         println!("pc: {}", self.program_counter);
     }
 
+    fn jsr(&mut self, mode: &AddressingMode) {
+        self.stack_push_u16(self.program_counter + 2);
+        self.program_counter = self.get_operand_address(mode);
+    }
+
+    fn rts(&mut self) {
+        self.program_counter = self.stack_pull_u16();
+    }
+
     fn inc(&mut self, mode: &AddressingMode) {
         let addr = self.get_operand_address(mode);
         let value = self.mem_read(addr).wrapping_add(1);
@@ -488,10 +497,24 @@ impl CPU {
         self.stack_pointer = self.stack_pointer.wrapping_sub(1);
     }
 
+    fn stack_push_u16(&mut self, data: u16) {
+        let [lo, hi] = data.to_le_bytes();
+
+        self.stack_push(hi);
+        self.stack_push(lo);
+    }
+
     fn stack_pull(&mut self) -> u8 {
         self.stack_pointer = self.stack_pointer.wrapping_add(1);
         let addr = u16::from_le_bytes([self.stack_pointer, 0x01]);
         self.mem_read(addr)
+    }
+
+    fn stack_pull_u16(&mut self) -> u16 {
+        let lo = self.stack_pull();
+        let hi = self.stack_pull();
+
+        u16::from_le_bytes([lo, hi])
     }
 
     fn pla(&mut self) {
@@ -566,6 +589,8 @@ impl CPU {
                 },
 
                 0x4C | 0x6C => self.jmp(&opcode.mode),
+                0x20 => self.jsr(&opcode.mode),
+                0x60 => self.rts(),
 
                 0xE6 | 0xF6 | 0xEE | 0xFE => {
                     self.inc(&opcode.mode);
