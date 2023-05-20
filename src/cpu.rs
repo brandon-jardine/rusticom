@@ -165,7 +165,7 @@ impl CPU {
             },
         }
     }
-
+    
     fn adc(&mut self, mode: &AddressingMode) {
         let addr = self.get_operand_address(mode);
         let value = self.mem_read(addr);
@@ -173,16 +173,33 @@ impl CPU {
         let carry_bit = (self.status & StatusFlags::CARRY).bits();
 
         let (carry_in, carry_a) = self.register_a.overflowing_add(carry_bit);
-        let (result, carry_b) = carry_in.overflowing_add(value);
+        let (mut temp, carry_b) = carry_in.overflowing_add(value);
 
+        if self.status.contains(StatusFlags::DECIMAL_MODE) {
+            if ((self.register_a ^ value ^ temp) & 0x10) == 0x10 {
+                temp += 0x06;
+            }
+            if (temp & 0xF0) > 0x90 {
+                temp += 0x60;
+            }
+        }
+
+        self.status.set(StatusFlags::OVERFLOW, (value ^ temp) & (self.register_a ^ temp) & 0x80 != 0);
         self.status.set(StatusFlags::CARRY, carry_a || carry_b);
-        self.update_zero_and_negative_flags(result);
+        self.register_a = temp;
+        self.update_zero_and_negative_flags(self.register_a);
 
-        let overflow = (value ^ result) & (self.register_a ^ result) & 0x80 != 0;
-        // sbc:        (value ^ result) & ((255 - self.register_a) ^ result) & 0x80 != 0;
-        self.status.set(StatusFlags::OVERFLOW, overflow);
+        // let carry_bit = (self.status & StatusFlags::CARRY).bits();
 
-        self.register_a = result;
+        // let (carry_in, carry_a) = self.register_a.overflowing_add(carry_bit);
+        // let (result, carry_b) = carry_in.overflowing_add(value);
+
+        // self.status.set(StatusFlags::CARRY, carry_a || carry_b);
+        // self.update_zero_and_negative_flags(result);
+
+        // let overflow = (value ^ result) & (self.register_a ^ result) & 0x80 != 0;
+        // // sbc:        (value ^ result) & ((255 - self.register_a) ^ result) & 0x80 != 0;
+        // self.status.set(StatusFlags::OVERFLOW, overflow);
     }
 
     fn and(&mut self, mode: &AddressingMode) {

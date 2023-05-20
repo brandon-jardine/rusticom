@@ -1674,5 +1674,42 @@ fn test_adc_overflow() {
     cpu.run();
 
     assert!(cpu.status.contains(StatusFlags::OVERFLOW));
+
+    cpu.load(vec![
+        0x69, 0b0111_1111,
+    ]);
+    cpu.reset();
+    cpu.status.set(StatusFlags::CARRY, true);
+    cpu.run();
+
+    assert!(cpu.status.contains(StatusFlags::OVERFLOW));
+}
+
+#[test]
+fn test_adc_binary_mode() {
+    let mut cpu = CPU::new();
+    cpu.load(vec![
+        0xF8, // SED
+        0x69, 0x19,
+    ]);
+    cpu.reset();
+    cpu.register_a = 0x28;
+    cpu.run();
+
+    assert_eq!(cpu.register_a, 0x47);
+}
+
+#[test]
+fn test_sbc_zero() {
+    let mut cpu = CPU::new();
+    cpu.load(vec![
+        0x18, 0xB8, // CLC, CLV
+        0xE9, 0x0A,
+    ]);
+    cpu.reset();
+    cpu.register_a = 0x0A;
+    cpu.run();
+
+    assert!(cpu.status.contains(StatusFlags::ZERO));
 }
 
