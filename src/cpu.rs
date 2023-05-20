@@ -166,6 +166,25 @@ impl CPU {
         }
     }
 
+    fn adc(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        let value = self.mem_read(addr);
+
+        let carry_bit = (self.status & StatusFlags::CARRY).bits();
+
+        let (carry_in, carry_a) = self.register_a.overflowing_add(carry_bit);
+        let (result, carry_b) = carry_in.overflowing_add(value);
+
+        self.status.set(StatusFlags::CARRY, carry_a || carry_b);
+        self.update_zero_and_negative_flags(result);
+
+        let overflow = (value ^ result) & (self.register_a ^ result) & 0x80 != 0;
+        // sbc:        (value ^ result) & ((255 - self.register_a) ^ result) & 0x80 != 0;
+        self.status.set(StatusFlags::OVERFLOW, overflow);
+
+        self.register_a = result;
+    }
+
     fn and(&mut self, mode: &AddressingMode) {
         let addr = self.get_operand_address(mode);
 
@@ -327,7 +346,6 @@ impl CPU {
     fn jmp(&mut self, mode: &AddressingMode) {
         let addr = self.get_operand_address(mode);
         self.program_counter = addr;
-        println!("pc: {}", self.program_counter);
     }
 
     fn jsr(&mut self, mode: &AddressingMode) {
@@ -542,6 +560,10 @@ impl CPU {
             let opcode = opcodes.get(&code).expect(&format!("OpCode {:x} is not recognized", code));
 
             match code {
+                0x69 | 0x65 | 0x75 | 0x6D | 0x7D | 0x79 | 0x61 | 0x71 => {
+                    self.adc(&opcode.mode);
+                },
+
                 0x29 | 0x25 | 0x35 | 0x2D | 0x3D | 0x39 | 0x21 | 0x31 => {
                     self.and(&opcode.mode);
                 },

@@ -1625,3 +1625,54 @@ fn test_rts_pc() {
     assert_eq!(cpu.program_counter, 0x8004);
 }
 
+#[test]
+fn test_adc_carry() {
+    let mut cpu = CPU::new();
+    cpu.load(vec![
+        0x18, // CLC
+        0x69, 0xFF, // ADC $FF
+    ]);
+    cpu.reset();
+    cpu.register_a = 0x01;
+    cpu.run();
+
+    assert!(cpu.status.contains(StatusFlags::CARRY));
+}
+
+#[test]
+fn test_adc_zero() {
+    let mut cpu = CPU::new();
+    cpu.load(vec![
+        0x69, 0x00,
+    ]);
+    cpu.reset();
+    cpu.run();
+
+    assert!(cpu.status.contains(StatusFlags::ZERO));
+}
+
+#[test]
+fn test_adc_negative() {
+    let mut cpu = CPU::new();
+    cpu.load(vec![
+        0x69, 0x80,
+    ]);
+    cpu.reset();
+    cpu.run();
+
+    assert!(cpu.status.contains(StatusFlags::NEGATIVE));
+}
+
+#[test]
+fn test_adc_overflow() {
+    let mut cpu = CPU::new();
+    cpu.load(vec![
+        0x69, 0b0100_0000,
+    ]);
+    cpu.reset();
+    cpu.register_a = 0b0100_0000;
+    cpu.run();
+
+    assert!(cpu.status.contains(StatusFlags::OVERFLOW));
+}
+
