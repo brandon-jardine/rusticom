@@ -1700,6 +1700,20 @@ fn test_adc_binary_mode() {
 }
 
 #[test]
+fn test_adc_binary_carry() {
+    let mut cpu = CPU::new();
+    cpu.load(vec![
+        0xF8, // SED
+        0x69, 0x99,
+    ]);
+    cpu.reset();
+    cpu.register_a = 0x01;
+    cpu.run();
+
+    assert!(cpu.status.contains(StatusFlags::CARRY));
+}
+
+#[test]
 fn test_sbc_zero() {
     let mut cpu = CPU::new();
     cpu.load(vec![

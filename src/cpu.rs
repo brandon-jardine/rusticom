@@ -168,16 +168,16 @@ impl CPU {
     
     fn adc(&mut self, mode: &AddressingMode) {
         let addr = self.get_operand_address(mode);
-        let value = self.mem_read(addr);
+        let mem_value = self.mem_read(addr);
 
         let carry_bit = (self.status & StatusFlags::CARRY).bits();
 
         let (carry_in, carry_a) = self.register_a.overflowing_add(carry_bit);
-        let (mut temp, carry_b) = carry_in.overflowing_add(value);
+        let (mut temp, carry_b) = carry_in.overflowing_add(mem_value);
 
         // abandon hope all ye who enter here
         if self.status.contains(StatusFlags::DECIMAL_MODE) {
-            if ((self.register_a ^ value ^ temp) & 0x10) == 0x10 {
+            if ((self.register_a ^ mem_value ^ temp) & 0x10) == 0x10 {
                 temp += 0x06;
             }
             if (temp & 0xF0) > 0x90 {
@@ -185,8 +185,15 @@ impl CPU {
             }
         }
 
-        self.status.set(StatusFlags::OVERFLOW, (value ^ temp) & (self.register_a ^ temp) & 0x80 != 0);
-        self.status.set(StatusFlags::CARRY, carry_a || carry_b);
+        // TODO check overflow flag for decimal mode
+        self.status.set(StatusFlags::OVERFLOW, (mem_value ^ temp) & (self.register_a ^ temp) & 0x80 != 0);
+
+        if self.status.contains(StatusFlags::DECIMAL_MODE) {
+            self.status.set(StatusFlags::CARRY, temp > 0x99);
+        } else {
+            self.status.set(StatusFlags::CARRY, carry_a || carry_b);
+        }
+
         self.register_a = temp;
         self.update_zero_and_negative_flags(self.register_a);
 
