@@ -185,7 +185,6 @@ impl CPU {
             }
         }
 
-        // TODO check overflow flag for decimal mode
         self.status.set(StatusFlags::OVERFLOW, (mem_value ^ temp) & (self.register_a ^ temp) & 0x80 != 0);
 
         if self.status.contains(StatusFlags::DECIMAL_MODE) {
@@ -195,19 +194,11 @@ impl CPU {
         }
 
         self.register_a = temp;
+
+        // in decimal mode the N and Z (and V) flags are 'invalid'. don't know what
+        // to do about that yet. On the 6502 anyway, the 65C02 is different.
+        // see: http://www.6502.org/tutorials/decimal_mode.html
         self.update_zero_and_negative_flags(self.register_a);
-
-        // let carry_bit = (self.status & StatusFlags::CARRY).bits();
-
-        // let (carry_in, carry_a) = self.register_a.overflowing_add(carry_bit);
-        // let (result, carry_b) = carry_in.overflowing_add(value);
-
-        // self.status.set(StatusFlags::CARRY, carry_a || carry_b);
-        // self.update_zero_and_negative_flags(result);
-
-        // let overflow = (value ^ result) & (self.register_a ^ result) & 0x80 != 0;
-        // // sbc:        (value ^ result) & ((255 - self.register_a) ^ result) & 0x80 != 0;
-        // self.status.set(StatusFlags::OVERFLOW, overflow);
     }
 
     fn and(&mut self, mode: &AddressingMode) {
