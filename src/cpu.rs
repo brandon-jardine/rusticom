@@ -175,6 +175,7 @@ impl CPU {
         let (carry_in, carry_a) = self.register_a.overflowing_add(carry_bit);
         let (mut temp, carry_b) = carry_in.overflowing_add(value);
 
+        // abandon hope all ye who enter here
         if self.status.contains(StatusFlags::DECIMAL_MODE) {
             if ((self.register_a ^ value ^ temp) & 0x10) == 0x10 {
                 temp += 0x06;
