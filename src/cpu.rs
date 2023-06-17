@@ -170,35 +170,42 @@ impl CPU {
         let addr = self.get_operand_address(mode);
         let mem_value = self.mem_read(addr);
         let carry_bit = (self.status & StatusFlags::CARRY).bits();
-
-        let (carry_in, carry_a) = self.register_a.overflowing_add(carry_bit);
-        let (mut tmp, carry_b) = carry_in.overflowing_add(mem_value);
-
         if self.status.contains(StatusFlags::DECIMAL_MODE) {
             // abandon hope all ye who enter here
+            
+            let a = self.register_a;
+            let s = mem_value;
+            let c = carry_bit;
 
-            if ((self.register_a ^ mem_value ^ tmp) & 0x10) == 0x10 {
-                tmp += 0x06;
+            let mut al = (a & 0b0000_1111).wrapping_add(s & 0b0000_1111).wrapping_add(c);
+            let mut ah = (a >> 4).wrapping_add(s >> 4).wrapping_add((al > 0b0000_1111) as u8);
+
+            self.status.set(StatusFlags::ZERO, (a.wrapping_add(s).wrapping_add(c)) != 0);
+
+            if al > 9 {
+                al += 6;
+                // ah += 1;
             }
 
-            if (tmp & 0xf0) > 0x90
-            {
-                tmp += 0x60;
+            self.status.set(StatusFlags::NEGATIVE, (ah & 8) != 0);
+            self.status.set(StatusFlags::OVERFLOW, (((ah << 4) ^ a) & 128) != 0 && ((a ^ s) & 128) == 0);
+
+            if ah > 9 {
+                ah += 6;
             }
 
-            self.status.set(StatusFlags::CARRY, tmp > 0x99);
+            self.status.set(StatusFlags::CARRY, ah > 0b0000_1111);
+            self.register_a = (ah << 4) | (al & 0b0000_1111);
+            // self.register_a = (ah << 4) + al;
         } else {
+            let (carry_in, carry_a) = self.register_a.overflowing_add(carry_bit);
+            let (tmp, carry_b) = carry_in.overflowing_add(mem_value);
+
             self.status.set(StatusFlags::CARRY, carry_a || carry_b);
+            self.status.set(StatusFlags::OVERFLOW, (self.register_a ^ tmp) & (mem_value ^ tmp) & 0x80 != 0);
+            self.register_a = tmp & 0xff;
+            self.update_zero_and_negative_flags(self.register_a);
         }
-        
-
-        self.status.set(StatusFlags::OVERFLOW, (self.register_a ^ tmp) & (mem_value ^ tmp) & 0x80 != 0);
-        self.register_a = tmp & 0xff;
-
-        // in decimal mode the N and Z (and V) flags are 'invalid'. don't know what
-        // to do about that yet. On the 6502 anyway, the 65C02 is different.
-        // see: http://www.6502.org/tutorials/decimal_mode.html
-        self.update_zero_and_negative_flags(self.register_a);
     }
 
     fn and(&mut self, mode: &AddressingMode) {
