@@ -172,31 +172,50 @@ impl CPU {
         let carry_bit = (self.status & StatusFlags::CARRY).bits();
         if self.status.contains(StatusFlags::DECIMAL_MODE) {
             // abandon hope all ye who enter here
-            
-            let a = self.register_a;
-            let s = mem_value;
-            let c = carry_bit;
+            let a = self.register_a as u16;
+            let v = mem_value as u16;
 
-            let mut al = (a & 0b0000_1111).wrapping_add(s & 0b0000_1111).wrapping_add(c);
-            let mut ah = (a >> 4).wrapping_add(s >> 4).wrapping_add((al > 0b0000_1111) as u8);
+            let mut temp = (a & 0x0F) + (v & 0x0F) + (carry_bit as u16);
+            if temp >= 0x0A {
+                temp = ((temp + 0x06) & 0x0F) + 0x10;
+            }
+            temp += (a & 0xF0).wrapping_add(v & 0xF0);
+            let temp2 = temp;
 
-            self.status.set(StatusFlags::ZERO, (a.wrapping_add(s).wrapping_add(c)) != 0);
-
-            if al > 9 {
-                al += 6;
-                // ah += 1;
+            if temp >= 0xA0 {
+                temp += 0x60;
             }
 
-            self.status.set(StatusFlags::NEGATIVE, (ah & 8) != 0);
-            self.status.set(StatusFlags::OVERFLOW, (((ah << 4) ^ a) & 128) != 0 && ((a ^ s) & 128) == 0);
+            let o = (!(a ^ v) & (a ^ temp2)) & 0x80 != 0;
+            self.status.set(StatusFlags::OVERFLOW, o);
+            self.status.set(StatusFlags::CARRY, temp > 99);
+            self.register_a = (temp & 0xFF) as u8;
+            self.update_zero_and_negative_flags(self.register_a);
 
-            if ah > 9 {
-                ah += 6;
-            }
+            // let a = self.register_a;
+            // let s = mem_value;
+            // let c = carry_bit;
 
-            self.status.set(StatusFlags::CARRY, ah > 0b0000_1111);
-            self.register_a = (ah << 4) | (al & 0b0000_1111);
-            // self.register_a = (ah << 4) + al;
+            // let mut al = (a & 0b0000_1111).wrapping_add(s & 0b0000_1111).wrapping_add(c);
+            // let mut ah = (a >> 4).wrapping_add(s >> 4).wrapping_add((al > 0b0000_1111) as u8);
+
+            // self.status.set(StatusFlags::ZERO, (a.wrapping_add(s).wrapping_add(c)) != 0);
+
+            // if al > 9 {
+            //     al += 6;
+            //     // ah += 1;
+            // }
+
+            // self.status.set(StatusFlags::NEGATIVE, (ah & 8) != 0);
+            // self.status.set(StatusFlags::OVERFLOW, (((ah << 4) ^ a) & 128) != 0 && ((a ^ s) & 128) == 0);
+
+            // if ah > 9 {
+            //     ah += 6;
+            // }
+
+            // self.status.set(StatusFlags::CARRY, ah > 0b0000_1111);
+            // self.register_a = (ah << 4) | (al & 0b0000_1111);
+            // // self.register_a = (ah << 4) + al;
         } else {
             let (carry_in, carry_a) = self.register_a.overflowing_add(carry_bit);
             let (tmp, carry_b) = carry_in.overflowing_add(mem_value);
