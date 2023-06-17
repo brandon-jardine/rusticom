@@ -1686,7 +1686,7 @@ fn test_adc_overflow() {
 }
 
 #[test]
-fn test_adc_binary_mode() {
+fn test_adc_decimal_mode() {
     let mut cpu = CPU::new();
     cpu.load(vec![
         0xF8, // SED
@@ -1700,17 +1700,64 @@ fn test_adc_binary_mode() {
 }
 
 #[test]
-fn test_adc_binary_carry() {
+fn test_adc_decimal_carry() {
     let mut cpu = CPU::new();
+    // 0x58 + 0x46 + 0x01 (carry) = 105 (0x05 + carry)
     cpu.load(vec![
         0xF8, // SED
-        0x69, 0x99,
+        0x38, // SEC
+        0x69, 0x58,
     ]);
     cpu.reset();
-    cpu.register_a = 0x01;
+    cpu.register_a = 0x46;
     cpu.run();
 
+    assert_eq!(cpu.register_a, 0x05);
     assert!(cpu.status.contains(StatusFlags::CARRY));
+}
+
+#[test]
+fn test_adc_decimal_add_81_and_92() {
+    let mut cpu = CPU::new();
+    cpu.load(vec![
+        0xF8,
+        0x69, 0x92,
+    ]);
+    cpu.reset();
+    cpu.register_a = 0x81;
+    cpu.run();
+
+    println!("reg a: {}", cpu.register_a);
+    assert_eq!(cpu.register_a, 0x73);
+    assert!(cpu.status.contains(StatusFlags::CARRY));
+}
+
+#[test]
+fn test_adc_decimal_add_zero() {
+    let mut cpu = CPU::new();
+    cpu.load(vec![
+        0xF8,
+        0x69, 0x00,
+    ]);
+    cpu.reset();
+    cpu.register_a = 0x10;
+    cpu.run();
+
+    assert_eq!(cpu.register_a, 0x10);
+}
+
+#[test]
+fn test_adc_decimal_9_plus_11() {
+    let mut cpu = CPU::new();
+    cpu.load(vec![
+        0xF8,
+        0x69, 0x11,
+    ]);
+    cpu.reset();
+    cpu.register_a = 0x09;
+    cpu.run();
+
+    assert_eq!(cpu.register_a, 0x20);
 }
 
 #[test]

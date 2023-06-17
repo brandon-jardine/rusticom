@@ -169,31 +169,31 @@ impl CPU {
     fn adc(&mut self, mode: &AddressingMode) {
         let addr = self.get_operand_address(mode);
         let mem_value = self.mem_read(addr);
-
         let carry_bit = (self.status & StatusFlags::CARRY).bits();
 
         let (carry_in, carry_a) = self.register_a.overflowing_add(carry_bit);
-        let (mut temp, carry_b) = carry_in.overflowing_add(mem_value);
-
-        // abandon hope all ye who enter here
-        if self.status.contains(StatusFlags::DECIMAL_MODE) {
-            if ((self.register_a ^ mem_value ^ temp) & 0x10) == 0x10 {
-                temp += 0x06;
-            }
-            if (temp & 0xF0) > 0x90 {
-                temp += 0x60;
-            }
-        }
-
-        self.status.set(StatusFlags::OVERFLOW, (mem_value ^ temp) & (self.register_a ^ temp) & 0x80 != 0);
+        let (mut tmp, carry_b) = carry_in.overflowing_add(mem_value);
 
         if self.status.contains(StatusFlags::DECIMAL_MODE) {
-            self.status.set(StatusFlags::CARRY, temp > 0x99);
+            // abandon hope all ye who enter here
+
+            if ((self.register_a ^ mem_value ^ tmp) & 0x10) == 0x10 {
+                tmp += 0x06;
+            }
+
+            if (tmp & 0xf0) > 0x90
+            {
+                tmp += 0x60;
+            }
+
+            self.status.set(StatusFlags::CARRY, tmp > 0x99);
         } else {
             self.status.set(StatusFlags::CARRY, carry_a || carry_b);
         }
+        
 
-        self.register_a = temp;
+        self.status.set(StatusFlags::OVERFLOW, (self.register_a ^ tmp) & (mem_value ^ tmp) & 0x80 != 0);
+        self.register_a = tmp & 0xff;
 
         // in decimal mode the N and Z (and V) flags are 'invalid'. don't know what
         // to do about that yet. On the 6502 anyway, the 65C02 is different.
