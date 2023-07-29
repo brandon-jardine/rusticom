@@ -1730,6 +1730,7 @@ fn test_adc_decimal_add_81_and_92() {
     println!("reg a: {}", cpu.register_a);
     assert_eq!(cpu.register_a, 0x73);
     assert!(cpu.status.contains(StatusFlags::CARRY));
+    assert!(cpu.status.contains(StatusFlags::OVERFLOW));
 }
 
 #[test]
@@ -1764,7 +1765,7 @@ fn test_adc_decimal_9_plus_11() {
 fn test_sbc_zero() {
     let mut cpu = CPU::new();
     cpu.load(vec![
-        0x18, 0xB8, // CLC, CLV
+        0x38, 0xB8, // CLC, CLV
         0xE9, 0x0A,
     ]);
     cpu.reset();
@@ -1772,5 +1773,19 @@ fn test_sbc_zero() {
     cpu.run();
 
     assert!(cpu.status.contains(StatusFlags::ZERO));
+}
+
+#[test]
+fn test_sbc() {
+    let mut cpu = CPU::new();
+    cpu.load(vec![
+        0x38, 0xB8,
+        0xE9, 0x27,
+    ]);
+    cpu.reset();
+    cpu.register_a = 0x29;
+    cpu.run();
+
+    assert_eq!(cpu.register_a, 0x02);
 }
 

@@ -169,12 +169,16 @@ impl CPU {
     fn adc(&mut self, mode: &AddressingMode) {
         let addr = self.get_operand_address(mode);
         let mem_value = self.mem_read(addr);
+        self.adc_arithmetic(mem_value)
+    }
+
+    fn adc_arithmetic(&mut self, arg: u8) {
         let carry_bit = (self.status & StatusFlags::CARRY).bits();
         if self.status.contains(StatusFlags::DECIMAL_MODE) {
             // abandon hope all ye who enter here
             
             let a = self.register_a as u16;
-            let v = mem_value as u16;
+            let v = arg as u16;
 
             // calculate lower nibble
             let mut tmp = (a & 0x0F) + (v & 0x0F) + (carry_bit as u16);
@@ -192,22 +196,34 @@ impl CPU {
             self.status.set(StatusFlags::OVERFLOW, o);
 
             // correct high nibble if out of BDC range
-            if tmp >= 0xA0 {
+            if tmp > 0x90 {
                 tmp += 0x60;
             }
 
             self.status.set(StatusFlags::CARRY, tmp > 99);
             self.register_a = (tmp & 0xFF) as u8;
         } else {
-            let (carry_in, carry_a) = self.register_a.overflowing_add(carry_bit);
-            let (tmp, carry_b) = carry_in.overflowing_add(mem_value);
+            println!("carry_bit: {}", carry_bit);
+            println!("register_a: {}", self.register_a);
+            println!("arg: {}", arg);
 
+            let (carry_in, carry_a) = self.register_a.overflowing_add(carry_bit);
+            let (tmp, carry_b) = carry_in.overflowing_add(arg);
+
+            println!("tmp: {}", tmp);
+            
             self.status.set(StatusFlags::CARRY, carry_a || carry_b);
-            self.status.set(StatusFlags::OVERFLOW, (self.register_a ^ tmp) & (mem_value ^ tmp) & 0x80 != 0);
+            self.status.set(StatusFlags::OVERFLOW, (self.register_a ^ tmp) & (arg ^ tmp) & 0x80 != 0);
             self.register_a = tmp;
         }
         
         self.update_zero_and_negative_flags(self.register_a);
+    }
+
+    fn sbc(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        let mem_value = self.mem_read(addr);
+        self.adc_arithmetic(!mem_value)
     }
 
     fn and(&mut self, mode: &AddressingMode) {
@@ -681,6 +697,10 @@ impl CPU {
 
                 0x6A | 0x66 | 0x76 | 0x6E | 0x7E => {
                     self.ror(&opcode.mode);
+                },
+
+                0xE9 | 0xE5 | 0xF5 | 0xED | 0xFD | 0xF9 | 0xE1 | 0xF1 => {
+                    self.sbc(&opcode.mode);
                 },
 
                 0x85 | 0x95 | 0x8D | 0x9D | 0x99 | 0x81 | 0x91 => {
