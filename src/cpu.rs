@@ -169,61 +169,95 @@ impl CPU {
     fn adc(&mut self, mode: &AddressingMode) {
         let addr = self.get_operand_address(mode);
         let mem_value = self.mem_read(addr);
-        self.adc_arithmetic(mem_value)
-    }
 
-    fn adc_arithmetic(&mut self, arg: u8) {
-        let carry_bit = (self.status & StatusFlags::CARRY).bits();
         if self.status.contains(StatusFlags::DECIMAL_MODE) {
-            // abandon hope all ye who enter here
-            
-            let a = self.register_a as u16;
-            let v = arg as u16;
-
-            // calculate lower nibble
-            let mut tmp = (a & 0x0F) + (v & 0x0F) + (carry_bit as u16);
-
-            // correct lower nibble if out of BDC range
-            if tmp > 0x09 {
-                tmp = ((tmp + 0x06) & 0x0F) + 0x10;
-            }
-
-            // add in high nibbles
-            tmp += (a & 0xF0).wrapping_add(v & 0xF0);
-            
-            // overflow is calculated before the upper nibble is corrected
-            let o = (!(a ^ v) & (a ^ tmp)) & 0x80 != 0;
-            self.status.set(StatusFlags::OVERFLOW, o);
-
-            // correct high nibble if out of BDC range
-            if tmp > 0x90 {
-                tmp += 0x60;
-            }
-
-            self.status.set(StatusFlags::CARRY, tmp > 99);
-            self.register_a = (tmp & 0xFF) as u8;
+            self.bcd_add(mem_value);
         } else {
-            println!("carry_bit: {}", carry_bit);
-            println!("register_a: {}", self.register_a);
-            println!("arg: {}", arg);
-
-            let (carry_in, carry_a) = self.register_a.overflowing_add(carry_bit);
-            let (tmp, carry_b) = carry_in.overflowing_add(arg);
-
-            println!("tmp: {}", tmp);
-            
-            self.status.set(StatusFlags::CARRY, carry_a || carry_b);
-            self.status.set(StatusFlags::OVERFLOW, (self.register_a ^ tmp) & (arg ^ tmp) & 0x80 != 0);
-            self.register_a = tmp;
+            self.binary_add(mem_value);
         }
-        
+
         self.update_zero_and_negative_flags(self.register_a);
     }
 
     fn sbc(&mut self, mode: &AddressingMode) {
         let addr = self.get_operand_address(mode);
         let mem_value = self.mem_read(addr);
-        self.adc_arithmetic(!mem_value)
+
+        if self.status.contains(StatusFlags::DECIMAL_MODE) {
+            self.bcd_sub(mem_value);
+        } else {
+            self.binary_add(!mem_value);
+        }
+
+        self.update_zero_and_negative_flags(self.register_a);
+    }
+
+    fn binary_add(&mut self, arg: u8) {
+        let carry_bit = (self.status & StatusFlags::CARRY).bits();
+        let (carry_in, carry_a) = self.register_a.overflowing_add(carry_bit);
+        let (tmp, carry_b) = carry_in.overflowing_add(arg);
+        
+        self.status.set(StatusFlags::CARRY, carry_a || carry_b);
+        self.status.set(StatusFlags::OVERFLOW, (self.register_a ^ tmp) & (arg ^ tmp) & 0x80 != 0);
+        self.register_a = tmp;
+    }
+
+    fn bcd_add(&mut self, arg: u8) {
+        let carry_bit = (self.status & StatusFlags::CARRY).bits();
+        // abandon hope all ye who enter here
+        
+        let a = self.register_a as u16;
+        let v = arg as u16;
+
+        // calculate lower nibble
+        let mut tmp = (a & 0x0F) + (v & 0x0F) + (carry_bit as u16);
+
+        // correct lower nibble if out of BDC range
+        if tmp > 0x09 {
+            tmp = ((tmp + 0x06) & 0x0F) + 0x10;
+        }
+
+        // add in high nibbles
+        tmp += (a & 0xF0).wrapping_add(v & 0xF0);
+        
+        // overflow is calculated before the upper nibble is corrected
+        let o = (!(a ^ v) & (a ^ tmp)) & 0x80 != 0;
+        self.status.set(StatusFlags::OVERFLOW, o);
+
+        // correct high nibble if out of BDC range
+        if tmp > 0x90 {
+            tmp += 0x60;
+        }
+
+        self.status.set(StatusFlags::CARRY, tmp > 99);
+        self.register_a = (tmp & 0xFF) as u8;
+    }
+
+    fn bcd_sub(&mut self, arg: u8) {
+        let carry_bit = self.status.contains(StatusFlags::CARRY) as u16;
+        let n_carry_bit = !carry_bit & 0x01;
+
+        let a = self.register_a as u16;
+        let v = arg as u16;
+
+        // calculate lower nibble
+        let mut lo = (a & 0x0F).wrapping_sub(v & 0x0F).wrapping_sub(n_carry_bit);
+
+        // correct lower nibble if outside bcd range1
+        if lo & 0x10 == 0x10 {
+            lo -= 0x06;
+        }
+
+        let mut hi = (a >> 4).wrapping_sub(v >> 4).wrapping_sub(lo & 0x10);
+
+        if hi & 0x10 == 0x10 {
+            hi -= 0x06;
+        }
+
+        self.status.set(StatusFlags::CARRY, a.wrapping_sub(v).wrapping_sub(n_carry_bit) & 256 != 0);
+        self.status.set(StatusFlags::OVERFLOW, (a.wrapping_sub(v).wrapping_sub(n_carry_bit) ^ v) & 128 == 128 && (a ^ v) & 128 == 128);
+
+        self.register_a = (((hi << 4) | (lo & 15)) & 0x00FF) as u8;
     }
 
     fn and(&mut self, mode: &AddressingMode) {

@@ -1765,7 +1765,7 @@ fn test_adc_decimal_9_plus_11() {
 fn test_sbc_zero() {
     let mut cpu = CPU::new();
     cpu.load(vec![
-        0x38, 0xB8, // CLC, CLV
+        0x38, 0xB8,
         0xE9, 0x0A,
     ]);
     cpu.reset();
@@ -1787,5 +1787,35 @@ fn test_sbc() {
     cpu.run();
 
     assert_eq!(cpu.register_a, 0x02);
+}
+
+#[test]
+fn test_sbc_decimal_mode() {
+    let mut cpu = CPU::new();
+    cpu.load(vec![
+        0x38, 0xB8,
+        0xF8,
+        0xE9, 0x03,
+    ]);
+    cpu.reset();
+    cpu.register_a = 0x99;
+    cpu.run();
+
+    assert_eq!(cpu.register_a, 0x96);
+}
+
+#[test]
+fn test_sbc_decimal_mode_wrap() {
+    let mut cpu = CPU::new();
+    cpu.load(vec![
+        0x38, 0xB8,
+        0xF8,
+        0xE9, 0x11,
+    ]);
+    cpu.reset();
+    cpu.register_x = 0x99;
+    cpu.run();
+
+    assert_eq!(cpu.register_a, 0x88);
 }
 
