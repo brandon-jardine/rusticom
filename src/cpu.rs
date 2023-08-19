@@ -248,7 +248,7 @@ impl CPU {
             lo -= 0x06;
         }
 
-        let mut hi = (a >> 4).wrapping_sub(v >> 4).wrapping_sub(lo & 0x10);
+        let mut hi = (a >> 4).wrapping_sub(v >> 4).wrapping_sub((lo & 0x10 == 0x10) as u16);
 
         if hi & 0x10 == 0x10 {
             hi -= 0x06;

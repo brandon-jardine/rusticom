@@ -1810,12 +1810,12 @@ fn test_sbc_decimal_mode_wrap() {
     cpu.load(vec![
         0x38, 0xB8,
         0xF8,
-        0xE9, 0x11,
+        0xE9, 0x24,
     ]);
     cpu.reset();
-    cpu.register_a = 0x99;
+    cpu.register_a = 0x50;
     cpu.run();
 
-    assert_eq!(cpu.register_a, 0x88);
+    assert_eq!(cpu.register_a, 0x26);
 }
 
