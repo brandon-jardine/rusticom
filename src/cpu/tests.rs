@@ -1813,7 +1813,7 @@ fn test_sbc_decimal_mode_wrap() {
         0xE9, 0x11,
     ]);
     cpu.reset();
-    cpu.register_x = 0x99;
+    cpu.register_a = 0x99;
     cpu.run();
 
     assert_eq!(cpu.register_a, 0x88);
