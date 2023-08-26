@@ -254,10 +254,10 @@ impl CPU {
             hi -= 0x06;
         }
 
-        self.status.set(StatusFlags::CARRY, a.wrapping_sub(v).wrapping_sub(n_carry_bit) & 256 != 0);
-        self.status.set(StatusFlags::OVERFLOW, (a.wrapping_sub(v).wrapping_sub(n_carry_bit) ^ v) & 128 == 128 && (a ^ v) & 128 == 128);
+        self.status.set(StatusFlags::CARRY, a.wrapping_sub(v).wrapping_sub(n_carry_bit) & 0x0F00 != 0);
+        self.status.set(StatusFlags::OVERFLOW, (a.wrapping_sub(v).wrapping_sub(n_carry_bit) ^ v) & 0x80 == 0x80 && (a ^ v) & 0x80 == 0x80);
 
-        self.register_a = (((hi << 4) | (lo & 15)) & 0x00FF) as u8;
+        self.register_a = ((hi << 4) | (lo & 0xF)) as u8;
     }
 
     fn and(&mut self, mode: &AddressingMode) {
