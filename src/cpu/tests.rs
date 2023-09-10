@@ -1467,6 +1467,28 @@ fn test_bmi_dont_branch() {
 }
 
 #[test]
+fn test_beq_branch() {
+    let mut cpu: CPU = CPU::new();
+    cpu.load_and_run(vec![
+        0xA9, 0x00,
+        0xF0, 0x06,
+    ]);
+
+    assert_eq!(cpu.program_counter, 0x800A);
+}
+
+#[test]
+fn test_beq_dont_branch() {
+    let mut cpu: CPU = CPU::new();
+    cpu.load_and_run(vec![
+        0xA9, 0x69,
+        0xF0, 0x06,
+    ]);
+
+    assert_eq!(cpu.program_counter, 0x8005);
+}
+
+#[test]
 fn test_bne_branch() {
     let mut cpu = CPU::new();
     cpu.load_and_run(vec![

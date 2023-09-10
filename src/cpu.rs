@@ -334,6 +334,13 @@ impl CPU {
         }
     }
 
+    fn beq(&mut self, mode: &AddressingMode) {
+        if self.status.contains(StatusFlags::ZERO) {
+            let offset = self.mem_read(self.get_operand_address(mode));
+            self.program_counter = self.program_counter.wrapping_add(offset as u16);
+        }
+    }
+
     fn bne(&mut self, mode: &AddressingMode) {
         if !self.status.contains(StatusFlags::ZERO) {
             let offset = self.mem_read(self.get_operand_address(mode));
@@ -660,6 +667,7 @@ impl CPU {
 
                 0x90 => self.bcc(&opcode.mode),
                 0xB0 => self.bcs(&opcode.mode),
+                0xF0 => self.beq(&opcode.mode),
                 0x30 => self.bmi(&opcode.mode),
                 0xD0 => self.bne(&opcode.mode),
                 0x10 => self.bpl(&opcode.mode),
