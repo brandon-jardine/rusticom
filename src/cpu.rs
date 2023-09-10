@@ -313,59 +313,14 @@ impl CPU {
         self.status.set(StatusFlags::CARRY, carry);
     }
 
-    fn bcc(&mut self, mode: &AddressingMode) {
-        if !self.status.contains(StatusFlags::CARRY) {
-            let offset = self.mem_read(self.get_operand_address(mode));
-            self.program_counter = self.program_counter.wrapping_add(offset as u16);
-        }
-    }
+    fn branch(&mut self, condition: bool) {
+        if condition {
+            let jump = self.mem_read(self.program_counter) as i8;
+            let jump_addr = self.program_counter
+                .wrapping_add(1)
+                .wrapping_add(jump as u16);
 
-    fn bcs(&mut self, mode: &AddressingMode) {
-        if self.status.contains(StatusFlags::CARRY) {
-            let offset = self.mem_read(self.get_operand_address(mode));
-            self.program_counter = self.program_counter.wrapping_add(offset as u16);
-        }
-    }
-
-    fn bmi(&mut self, mode: &AddressingMode) {
-        if self.status.contains(StatusFlags::NEGATIVE) {
-            let offset = self.mem_read(self.get_operand_address(mode));
-            self.program_counter = self.program_counter.wrapping_add(offset as u16);
-        }
-    }
-
-    fn beq(&mut self, mode: &AddressingMode) {
-        if self.status.contains(StatusFlags::ZERO) {
-            let offset = self.mem_read(self.get_operand_address(mode));
-            self.program_counter = self.program_counter.wrapping_add(offset as u16);
-        }
-    }
-
-    fn bne(&mut self, mode: &AddressingMode) {
-        if !self.status.contains(StatusFlags::ZERO) {
-            let offset = self.mem_read(self.get_operand_address(mode));
-            self.program_counter = self.program_counter.wrapping_add(offset as u16);
-        }
-    }
-
-    fn bpl(&mut self, mode: &AddressingMode) {
-        if !self.status.contains(StatusFlags::NEGATIVE) {
-            let offset = self.mem_read(self.get_operand_address(mode));
-            self.program_counter = self.program_counter.wrapping_add(offset as u16);
-        }
-    }
-
-    fn bvc(&mut self, mode: &AddressingMode) {
-        if !self.status.contains(StatusFlags::OVERFLOW) {
-            let offset = self.mem_read(self.get_operand_address(mode));
-            self.program_counter = self.program_counter.wrapping_add(offset as u16);
-        }
-    }
-
-    fn bvs(&mut self, mode: &AddressingMode) {
-        if self.status.contains(StatusFlags::OVERFLOW) {
-            let offset = self.mem_read(self.get_operand_address(mode));
-            self.program_counter = self.program_counter.wrapping_add(offset as u16);
+            self.program_counter = jump_addr;
         }
     }
 
@@ -435,13 +390,13 @@ impl CPU {
         self.program_counter = addr;
     }
 
-    fn jsr(&mut self, mode: &AddressingMode) {
-        self.stack_push_u16(self.program_counter + 2);
-        self.program_counter = self.get_operand_address(mode);
+    fn jsr(&mut self) {
+       self.stack_push_u16(self.program_counter + 2);
+       self.program_counter = self.mem_read_u16(self.program_counter);
     }
 
     fn rts(&mut self) {
-        self.program_counter = self.stack_pull_u16();
+        self.program_counter = self.stack_pop_u16();
     }
 
     fn inc(&mut self, mode: &AddressingMode) {
@@ -491,7 +446,7 @@ impl CPU {
         let value = self.mem_read(addr);
 
         self.register_a = self.register_a | value;
-        self.update_zero_and_negative_flags(self.register_a);
+         self.update_zero_and_negative_flags(self.register_a);
     }
 
     fn rol(&mut self, mode: &AddressingMode) {
@@ -609,26 +564,26 @@ impl CPU {
         self.stack_push(lo);
     }
 
-    fn stack_pull(&mut self) -> u8 {
+    fn stack_pop(&mut self) -> u8 {
         self.stack_pointer = self.stack_pointer.wrapping_add(1);
         let addr = u16::from_le_bytes([self.stack_pointer, 0x01]);
         self.mem_read(addr)
     }
 
-    fn stack_pull_u16(&mut self) -> u16 {
-        let lo = self.stack_pull();
-        let hi = self.stack_pull();
+    fn stack_pop_u16(&mut self) -> u16 {
+        let lo = self.stack_pop();
+        let hi = self.stack_pop();
 
         u16::from_le_bytes([lo, hi])
     }
 
     fn pla(&mut self) {
-        self.register_a = self.stack_pull();
+        self.register_a = self.stack_pop();
         self.update_zero_and_negative_flags(self.register_a);
     }
 
     fn plp(&mut self) {
-        self.status = StatusFlags::from_bits_truncate(self.stack_pull());
+        self.status = StatusFlags::from_bits_truncate(self.stack_pop());
     }
 
     fn update_zero_and_negative_flags(&mut self, result: u8) {
@@ -652,6 +607,8 @@ impl CPU {
 
             let opcode = opcodes.get(&code).expect(&format!("OpCode {:x} is not recognized", code));
 
+            println!("execute {:#04x} {:#04x} {:#04x}", code, self.memory[self.program_counter as usize], self.memory[(self.program_counter + 1) as usize]);
+
             match code {
                 0x69 | 0x65 | 0x75 | 0x6D | 0x7D | 0x79 | 0x61 | 0x71 => {
                     self.adc(&opcode.mode);
@@ -665,14 +622,14 @@ impl CPU {
                     self.asl(&opcode.mode);
                 },
 
-                0x90 => self.bcc(&opcode.mode),
-                0xB0 => self.bcs(&opcode.mode),
-                0xF0 => self.beq(&opcode.mode),
-                0x30 => self.bmi(&opcode.mode),
-                0xD0 => self.bne(&opcode.mode),
-                0x10 => self.bpl(&opcode.mode),
-                0x50 => self.bvc(&opcode.mode),
-                0x70 => self.bvs(&opcode.mode),
+                0x90 => self.branch(!self.status.contains(StatusFlags::CARRY)),     // BCC
+                0xB0 => self.branch(self.status.contains(StatusFlags::CARRY)),      // BCS
+                0xF0 => self.branch(self.status.contains(StatusFlags::ZERO)),       // BEQ
+                0x30 => self.branch(self.status.contains(StatusFlags::NEGATIVE)),   // BMI
+                0xD0 => self.branch(!self.status.contains(StatusFlags::ZERO)),      // BNE
+                0x10 => self.branch(!self.status.contains(StatusFlags::NEGATIVE)),  // BPL
+                0x50 => self.branch(!self.status.contains(StatusFlags::OVERFLOW)),  // BVC
+                0x70 => self.branch(self.status.contains(StatusFlags::OVERFLOW)),   // BVS
 
                 0x24 | 0x2C => self.bit(&opcode.mode),
 
@@ -705,7 +662,7 @@ impl CPU {
                 },
 
                 0x4C | 0x6C => self.jmp(&opcode.mode),
-                0x20 => self.jsr(&opcode.mode),
+                0x20 => self.jsr(),
                 0x60 => self.rts(),
 
                 0xE6 | 0xF6 | 0xEE | 0xFE => {

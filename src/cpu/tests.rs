@@ -1408,7 +1408,7 @@ fn test_bcc_branch() {
         0x90, 0x06, // BCC 0x10
     ]);
 
-    assert_eq!(cpu.program_counter, 0x8009);
+    assert_eq!(cpu.program_counter, 0x800A);
 }
 
 #[test]
@@ -1430,7 +1430,7 @@ fn test_bcs_branch() {
         0xB0, 0x06, // BCC 0x10
     ]);
 
-    assert_eq!(cpu.program_counter, 0x8009);
+    assert_eq!(cpu.program_counter, 0x800A);
 }
 
 #[test]
@@ -1452,7 +1452,7 @@ fn test_bmi_branch() {
         0x30, 0x06,
     ]);
 
-    assert_eq!(cpu.program_counter, 0x800A);
+    assert_eq!(cpu.program_counter, 0x800B);
 }
 
 #[test]
@@ -1474,7 +1474,7 @@ fn test_beq_branch() {
         0xF0, 0x06,
     ]);
 
-    assert_eq!(cpu.program_counter, 0x800A);
+    assert_eq!(cpu.program_counter, 0x800B);
 }
 
 #[test]
@@ -1496,7 +1496,7 @@ fn test_bne_branch() {
         0xD0, 0x06,
     ]);
 
-    assert_eq!(cpu.program_counter, 0x800A);
+    assert_eq!(cpu.program_counter, 0x800B);
 }
 
 #[test]
@@ -1518,7 +1518,7 @@ fn test_bpl_branch() {
         0x10, 0x06,
     ]);
 
-    assert_eq!(cpu.program_counter, 0x800A);
+    assert_eq!(cpu.program_counter, 0x800B);
 }
 
 #[test]
@@ -1542,7 +1542,7 @@ fn test_bvc_branch() {
     cpu.status.set(StatusFlags::OVERFLOW, false);
     cpu.run();
 
-    assert_eq!(cpu.program_counter, 0x8008);
+    assert_eq!(cpu.program_counter, 0x8009);
 }
 
 #[test]
@@ -1568,7 +1568,7 @@ fn test_bvs_branch() {
     cpu.status.set(StatusFlags::OVERFLOW, true);
     cpu.run();
 
-    assert_eq!(cpu.program_counter, 0x8008);
+    assert_eq!(cpu.program_counter, 0x8009);
 }
 
 #[test]
