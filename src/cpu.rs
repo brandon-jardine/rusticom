@@ -9,7 +9,7 @@ bitflags! {
     pub struct StatusFlags: u8 {
         const CARRY             = 0b0000_0001;
         const ZERO              = 0b0000_0010;
-    const INTERRUPT_DISABLE = 0b0000_0100;
+        const INTERRUPT_DISABLE = 0b0000_0100;
         const DECIMAL_MODE      = 0b0000_1000;
         const BREAK             = 0b0001_0000;
         const BREAK2            = 0b0010_0000;
@@ -18,7 +18,7 @@ bitflags! {
     }
 }
 
-const STACK_RESET: u8 = 0xFD;
+const STACK_RESET: u8 = 0xFF;
 
 pub struct CPU {
     pub register_a: u8,
@@ -91,8 +91,12 @@ impl CPU {
     }
 
     pub fn load(&mut self, program: Vec<u8>) {
-        self.memory[0x0600 .. (0x0600 + program.len())].copy_from_slice(&program[..]);
-        self.mem_write_u16(0xFFFC, 0x0600);
+        self.load_at(program, 0x8000);
+    }
+
+    pub fn load_at(&mut self, program: Vec<u8>, addr: u16) {
+        self.memory[(addr as usize) .. ((addr as usize) + program.len())].copy_from_slice(&program[..]);
+        self.mem_write_u16(0xFFFC, addr);
     }
 
     pub fn reset(&mut self) {
@@ -100,7 +104,7 @@ impl CPU {
         self.register_x = 0;
         self.register_y = 0;
         self.stack_pointer = STACK_RESET;
-        self.status = StatusFlags::from_bits_truncate(0b100100);
+        self.status = StatusFlags::from_bits_truncate(0);
 
         self.program_counter = self.mem_read_u16(0xFFFC);
     }
@@ -375,14 +379,10 @@ impl CPU {
     fn compare(&mut self, register: u8, mode: &AddressingMode) {
         let addr = self.get_operand_address(mode);
         let value = self.mem_read(addr);
-
-        if value <= register {
-            self.status.insert(StatusFlags::CARRY);
-        } else {
-            self.status.remove(StatusFlags::CARRY);
-        }
-
-        self.update_zero_and_negative_flags(register.wrapping_sub(value));
+        let result = register.wrapping_sub(value); 
+        self.status.set(StatusFlags::CARRY, register >= value);
+        self.status.set(StatusFlags::ZERO, value == register);
+        self.status.set(StatusFlags::NEGATIVE, result & 0b1000_0000 == 0b1000_0000);
     }
 
     fn cmp(&mut self, mode: &AddressingMode) {

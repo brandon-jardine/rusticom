@@ -116,7 +116,7 @@ fn main() {
     ];
 
     let mut cpu = CPU::new();
-    cpu.load(game_code);
+    cpu.load_at(game_code, 0x0600);
     cpu.reset();
 
     let mut screen_state = [0 as u8; 32 * 3 * 32];

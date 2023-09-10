@@ -71,7 +71,7 @@ fn test_reset() {
     assert_eq!(cpu.register_x, 0);
     assert_eq!(cpu.register_a, 0);
     assert_eq!(cpu.register_y, 0);
-    assert_eq!(cpu.stack_pointer, 0xff);
+    assert_eq!(cpu.stack_pointer, 0xFF);
     assert_eq!(cpu.status.bits(), 0);
 }
 
