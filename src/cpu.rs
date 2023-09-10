@@ -9,7 +9,7 @@ bitflags! {
     pub struct StatusFlags: u8 {
         const CARRY             = 0b0000_0001;
         const ZERO              = 0b0000_0010;
-        const INTERRUPT_DISABLE = 0b0000_0100;
+    const INTERRUPT_DISABLE = 0b0000_0100;
         const DECIMAL_MODE      = 0b0000_1000;
         const BREAK             = 0b0001_0000;
         const BREAK2            = 0b0010_0000;
@@ -17,6 +17,8 @@ bitflags! {
         const NEGATIVE          = 0b1000_0000;
     }
 }
+
+const STACK_RESET: u8 = 0xFD;
 
 pub struct CPU {
     pub register_a: u8,
@@ -44,7 +46,7 @@ pub enum AddressingMode {
     Implied,
 }
 
-trait Mem {
+pub trait Mem {
     fn mem_read(&self, addr: u16) -> u8;
     fn mem_write(&mut self, addr: u16, data: u8);
     fn mem_read_u16(&self, pos: u16) -> u16 {
@@ -75,7 +77,7 @@ impl CPU {
             register_a: 0,
             register_x: 0,
             register_y: 0,
-            stack_pointer: 0xff,
+            stack_pointer: STACK_RESET,
             status: StatusFlags::from_bits_truncate(0),
             program_counter: 0,
             memory: [0; 0xFFFF],
@@ -89,16 +91,16 @@ impl CPU {
     }
 
     pub fn load(&mut self, program: Vec<u8>) {
-        self.memory[0x8000 .. (0x8000 + program.len())].copy_from_slice(&program[..]);
-        self.mem_write_u16(0xFFFC, 0x8000);
+        self.memory[0x0600 .. (0x0600 + program.len())].copy_from_slice(&program[..]);
+        self.mem_write_u16(0xFFFC, 0x0600);
     }
 
     pub fn reset(&mut self) {
         self.register_a = 0;
         self.register_x = 0;
         self.register_y = 0;
-        self.stack_pointer = 0xff;
-        self.status = StatusFlags::from_bits_truncate(0);
+        self.stack_pointer = STACK_RESET;
+        self.status = StatusFlags::from_bits_truncate(0b100100);
 
         self.program_counter = self.mem_read_u16(0xFFFC);
     }
@@ -373,11 +375,14 @@ impl CPU {
     fn compare(&mut self, register: u8, mode: &AddressingMode) {
         let addr = self.get_operand_address(mode);
         let value = self.mem_read(addr);
-        let result = register - value;
 
-        self.status.set(StatusFlags::NEGATIVE, result & 0b1000_0000 == 0b1000_0000);
-        self.status.set(StatusFlags::ZERO, value == register);
-        self.status.set(StatusFlags::CARRY, register >= value);
+        if value <= register {
+            self.status.insert(StatusFlags::CARRY);
+        } else {
+            self.status.remove(StatusFlags::CARRY);
+        }
+
+        self.update_zero_and_negative_flags(register.wrapping_sub(value));
     }
 
     fn cmp(&mut self, mode: &AddressingMode) {
@@ -625,9 +630,15 @@ impl CPU {
     }
 
     pub fn run(&mut self) {
+        self.run_with_callback(|_| {});
+    }
+
+    pub fn run_with_callback<F>(&mut self, mut callback: F) where F: FnMut(&mut CPU) {
         let ref opcodes: HashMap<u8, &'static opcode::OpCode> = *opcode::OPCODES_MAP;
 
         loop {
+            callback(self);
+
             let code = self.mem_read(self.program_counter);
             self.program_counter += 1;
             let program_counter_state = self.program_counter;
