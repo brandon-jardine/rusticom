@@ -28,6 +28,7 @@ pub struct CPU {
     pub status: StatusFlags,
     pub program_counter: u16,
     memory: [u8; 0xFFFF],
+    pause: bool,
 }
 
 #[derive(Debug)]
@@ -81,7 +82,12 @@ impl CPU {
             status: StatusFlags::from_bits_truncate(0),
             program_counter: 0,
             memory: [0; 0xFFFF],
+            pause: false,
         }
+    }
+
+    pub fn toggle_pause(&mut self) {
+        self.pause = !self.pause;
     }
 
     pub fn load_and_run(&mut self, program: Vec<u8>) {
@@ -601,13 +607,21 @@ impl CPU {
         loop {
             callback(self);
 
+            if self.pause {
+                continue;
+            }
+
             let code = self.mem_read(self.program_counter);
             self.program_counter += 1;
             let program_counter_state = self.program_counter;
 
             let opcode = opcodes.get(&code).expect(&format!("OpCode {:x} is not recognized", code));
 
-            println!("execute {:#04x} {:#04x} {:#04x}", code, self.memory[self.program_counter as usize], self.memory[(self.program_counter + 1) as usize]);
+            print!("execute: {:#04X} {:2X} {:2X} ", code, self.memory[self.program_counter as usize], self.memory[(self.program_counter + 1) as usize]);
+            print!("status: {:08b} ", self.status);
+            print!("a: {:#04X} ", self.register_a);
+            print!("x: {:#04X} ", self.register_x);
+            println!("y: {:#04X} ", self.register_y);
 
             match code {
                 0x69 | 0x65 | 0x75 | 0x6D | 0x7D | 0x79 | 0x61 | 0x71 => {

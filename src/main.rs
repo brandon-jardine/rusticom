@@ -37,6 +37,10 @@ fn handle_user_input(cpu: &mut CPU, event_pump: &mut EventPump) {
                 cpu.mem_write(0xFF, 0x64);
             },
 
+            Event::KeyDown { keycode: Some(Keycode::P), .. } => {
+                cpu.toggle_pause();
+            }
+
             _ => { }
         }
     }
@@ -123,12 +127,6 @@ fn main() {
     let mut rng = rand::thread_rng();
 
     cpu.run_with_callback(move |cpu| {
-        // TODO
-        // 1. read user input and write to 0xFF in memory
-        // 2. update 0xFE in memory with new random number
-        // 3. read mem mapped screen state
-        // 4. render screen state
-        
         handle_user_input(cpu, &mut event_pump);
         cpu.mem_write(0xFE, rng.gen_range(1, 16));
 
