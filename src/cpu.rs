@@ -1,5 +1,7 @@
 use bitflags::bitflags;
 use std::collections::HashMap;
+
+use crate::bus::Bus;
 use crate::opcode;
 
 #[cfg(test)]
@@ -27,7 +29,7 @@ pub struct CPU {
     pub stack_pointer: u8,
     pub status: StatusFlags,
     pub program_counter: u16,
-    memory: [u8; 0xFFFF],
+    pub bus: Bus,
     pause: bool,
 }
 
@@ -64,11 +66,19 @@ pub trait Mem {
 
 impl Mem for CPU {
     fn mem_read(&self, addr: u16) -> u8 {
-        self.memory[addr as usize]
+        self.bus.mem_read(addr)
     }
 
     fn mem_write(&mut self, addr: u16, data: u8) {
-        self.memory[addr as usize] = data;
+        self.bus.mem_write(addr, data)
+    }
+
+    fn mem_read_u16(&self, pos: u16) -> u16 {
+        self.bus.mem_read_u16(pos)
+    }
+
+    fn mem_write_u16(&mut self, pos: u16, data: u16) {
+        self.bus.mem_write_u16(pos, data)
     }
 }
 
@@ -81,7 +91,7 @@ impl CPU {
             stack_pointer: STACK_RESET,
             status: StatusFlags::from_bits_truncate(0),
             program_counter: 0,
-            memory: [0; 0xFFFF],
+            bus: Bus::new(),
             pause: false,
         }
     }
@@ -101,7 +111,9 @@ impl CPU {
     }
 
     pub fn load_at(&mut self, program: Vec<u8>, addr: u16) {
-        self.memory[(addr as usize) .. ((addr as usize) + program.len())].copy_from_slice(&program[..]);
+        for i in 0..program.len() as u16 {
+            self.mem_write(addr + i, program[i as usize]);
+        }
         self.mem_write_u16(0xFFFC, addr);
     }
 
@@ -617,7 +629,7 @@ impl CPU {
 
             let opcode = opcodes.get(&code).expect(&format!("OpCode {:x} is not recognized", code));
 
-            print!("execute: {:#04X} {:2X} {:2X} ", code, self.memory[self.program_counter as usize], self.memory[(self.program_counter + 1) as usize]);
+            print!("execute: {:#04X} {:02X} {:02X} ", code, self.mem_read(self.program_counter), self.mem_read(self.program_counter + 1));
             print!("status: {:08b} ", self.status);
             print!("a: {:#04X} ", self.register_a);
             print!("x: {:#04X} ", self.register_x);

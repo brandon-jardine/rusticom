@@ -1,3 +1,4 @@
+pub mod bus;
 pub mod cpu;
 pub mod opcode;
 
@@ -136,7 +137,7 @@ fn main() {
             canvas.present();
         }
 
-        ::std::thread::sleep(std::time::Duration::new(0, 70_000));
+        ::std::thread::sleep(std::time::Duration::new(0, 25_000));
     });
 
     
