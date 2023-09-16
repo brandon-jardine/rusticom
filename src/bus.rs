@@ -1,4 +1,5 @@
 use crate::cpu::Mem;
+use crate::rom::Rom;
 
 const RAM_START: u16 = 0x0000;
 const RAM_END: u16 = 0x1FFF;
@@ -14,7 +15,8 @@ const ROM_MASK: u16 = 0b0111_1111_1111_1111;
 
 pub struct Bus {
     cpu_vram: [u8; 2048],
-    prg_rom: [u8; 0x7FFF],
+    rom: Rom,
+    pub allow_rom_writes: bool,
 }
 
 impl Mem for Bus {
@@ -31,8 +33,13 @@ impl Mem for Bus {
             }
 
             ROM_START ..= ROM_END => {
-                let mask_apply = addr & ROM_MASK;
-                self.prg_rom[mask_apply as usize]
+                let mut mask_apply = addr & ROM_MASK;
+
+                if self.rom.prg_rom.len() == 0x4000 && addr >= 0x4000 {
+                    mask_apply = mask_apply % 0x4000;
+                }
+
+                self.rom.prg_rom[mask_apply as usize]
             }
 
             _ => {
@@ -54,8 +61,12 @@ impl Mem for Bus {
             }
 
             ROM_START ..= ROM_END => {
-                let mask_apply = addr & ROM_MASK;
-                self.prg_rom[mask_apply as usize] = data;
+                if self.allow_rom_writes {
+                    let mask_apply = addr & ROM_MASK;
+                    self.rom.prg_rom[mask_apply as usize] = data;
+                } else {
+                    panic!("Attempted to write to ROM!");
+                }
             }
 
             _ => {
@@ -66,10 +77,11 @@ impl Mem for Bus {
 }
 
 impl Bus {
-    pub fn new() -> Self {
+    pub fn new(rom: Rom) -> Self {
         Bus {
             cpu_vram: [0; 2048],
-            prg_rom: [0; 0x7FFF],
+            rom,
+            allow_rom_writes: false,
         }
     }
 }
