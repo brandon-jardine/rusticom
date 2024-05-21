@@ -21,6 +21,7 @@ bitflags! {
     }
 }
 
+const STACK: u16 = 0x0100;
 const STACK_RESET: u8 = 0xFF;
 
 pub struct CPU {
@@ -75,7 +76,7 @@ impl CPU {
             register_x: 0,
             register_y: 0,
             stack_pointer: STACK_RESET,
-            status: StatusFlags::from_bits_truncate(0),
+            status: StatusFlags::from_bits_truncate(0b0010_0100),
             program_counter: 0,
             bus,
             pause: false,
@@ -556,8 +557,7 @@ impl CPU {
     }
 
     fn stack_push(&mut self, data: u8) {
-        let addr = u16::from_le_bytes([self.stack_pointer, 0x01]);
-        self.mem_write(addr, data);
+        self.mem_write(STACK + self.stack_pointer as u16, data);
         self.stack_pointer = self.stack_pointer.wrapping_sub(1);
     }
 
@@ -570,8 +570,7 @@ impl CPU {
 
     fn stack_pop(&mut self) -> u8 {
         self.stack_pointer = self.stack_pointer.wrapping_add(1);
-        let addr = u16::from_le_bytes([self.stack_pointer, 0x01]);
-        self.mem_read(addr)
+        self.mem_read(STACK.wrapping_add(self.stack_pointer as u16))
     }
 
     fn stack_pop_u16(&mut self) -> u16 {

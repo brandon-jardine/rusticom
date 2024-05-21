@@ -1,6 +1,7 @@
 use std::collections::HashMap;
+use std::ops::Add;
 
-use crate::cpu::CPU;
+use crate::cpu::{AddressingMode, CPU};
 use crate::mem::Mem;
 use crate::opcode;
 
@@ -22,11 +23,78 @@ pub fn trace(cpu: &CPU) -> String {
         _ => format!("{:02X} {:02X} {:02X}", instr_byte_one, instr_byte_two, instr_byte_three),
     };
 
+    let opcode_args = match opcode.mode {
+        // length 1 modes
+        AddressingMode::Implied     => format!("                           "),
+
+        // length 2 modes
+        AddressingMode::Immediate   => format!("#${:02X}                       ", instr_byte_two),
+        AddressingMode::ZeroPage    => format!("${:02X} = {:02X}                     ", instr_byte_two, cpu.mem_read(instr_byte_two.into())),
+        AddressingMode::ZeroPage_X  => {
+            let addr = instr_byte_two.wrapping_add(cpu.register_x);
+            let value = cpu.mem_read(addr.into());
+
+            format!("${:02X},X @ {:02X} = {:02X}            ", instr_byte_two, addr, value)
+        },
+        AddressingMode::ZeroPage_Y  => {
+            let addr = instr_byte_two.wrapping_add(cpu.register_y);
+            let value = cpu.mem_read(addr.into());
+
+            format!("${:02X},Y @ {:02X} = {:02X}            ", instr_byte_two, addr, value)
+        },
+        AddressingMode::Indirect_X  => {
+            let zp_offset: u8 = cpu.register_x.wrapping_add(instr_byte_two);
+            let target: u16 = cpu.mem_read_u16(zp_offset.into());
+            let value = cpu.mem_read(target);
+
+            format!("(${:02X},X) @ {:02X} = {:04X} = {:02X}   ", instr_byte_two, zp_offset, target, value)
+        },
+        AddressingMode::Indirect_Y  => {
+           let addr: u16 = cpu.mem_read_u16(instr_byte_two.into()).wrapping_add(cpu.register_y.into()); 
+           let value = cpu.mem_read(addr);
+
+           format!("(${:02X}),Y = {:04X} @ {:04X} = {:02X} ", instr_byte_two, addr, addr, value)
+        },
+
+        // length 3 modes
+        AddressingMode::Indirect    => {
+            let addr: u16 = u16::from_le_bytes([instr_byte_two, instr_byte_three]);
+            let target: u16 = cpu.mem_read_u16(addr);
+
+            format!("(${:04X} = {:04X})             ", addr, target)
+        },
+        AddressingMode::Absolute    => format!("${:02X}{:02X}                      ", instr_byte_three, instr_byte_two),
+        AddressingMode::Absolute_X  => {
+            let addr: u16 = u16::from_le_bytes([instr_byte_two, instr_byte_three])
+                .wrapping_add(cpu.register_x.into());
+            let target: u16 = cpu.mem_read_u16(addr);
+
+            let value = cpu.mem_read(target);
+
+            format!("${:04X},X @ {:04X} = {:02X}", addr, target, value)
+        },
+        AddressingMode::Absolute_Y  => {
+            let addr: u16 = u16::from_le_bytes([instr_byte_two, instr_byte_three])
+                .wrapping_add(cpu.register_y.into());
+            let target: u16 = cpu.mem_read_u16(addr);
+
+            let value = cpu.mem_read(target);
+
+            format!("${:04X},Y @ {:04X} = {:02X}", addr, target, value)
+        },
+    };
+
     format!(
-        "{pc:04X}  {opcode_hex}  {opcode_asm}",
-        pc=cpu.program_counter,
-        opcode_hex=opcode_hex,
-        opcode_asm=opcode.mnemonic,
+        "{:04X}  {}  {} {} A:{:02X} X:{:02X} Y:{:02X} P:{:02X} SP:{:02X}",
+        cpu.program_counter,
+        opcode_hex,
+        opcode.mnemonic,
+        opcode_args,
+        cpu.register_a,
+        cpu.register_x,
+        cpu.register_y,
+        cpu.status.bits(),
+        cpu.stack_pointer,
     )
 }
 
