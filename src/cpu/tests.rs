@@ -602,8 +602,8 @@ fn test_bit_overflow_negative_flag() {
     let b6 = mem & 0b0100_0000;
     let b7 = mem & 0b1000_0000;
 
-    assert_eq!(cpu.status.bits & 0b0100_0000, b6);
-    assert_eq!(cpu.status.bits & 0b1000_0000, b7);
+    assert_eq!(cpu.status.bits() & 0b0100_0000, b6);
+    assert_eq!(cpu.status.bits() & 0b1000_0000, b7);
 }
 
 #[test]

@@ -7,3 +7,6 @@
 **/*.rs.bk
 
 snake6502.asm
+snake.nes
+nestest.nes
+
