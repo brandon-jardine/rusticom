@@ -2,11 +2,13 @@ pub mod bus;
 pub mod cpu;
 pub mod opcode;
 pub mod rom;
+pub mod trace;
 
 use crate::bus::Bus;
 use crate::cpu::CPU;
 use crate::cpu::Mem;
 use crate::rom::Rom;
+use crate::trace::trace;
 
 use rand::Rng;
 use sdl2::event::Event;
@@ -111,6 +113,8 @@ fn main() {
     let mut rng = rand::thread_rng();
 
     cpu.run_with_callback(move |cpu| {
+        println!("{}", trace(cpu));
+
         handle_user_input(cpu, &mut event_pump);
         cpu.mem_write(0xFE, rng.gen_range(1, 16));
 

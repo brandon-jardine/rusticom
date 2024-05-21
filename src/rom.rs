@@ -1,6 +1,6 @@
 
 #[cfg(test)]
-mod tests;
+pub mod tests;
 
 #[derive(Debug, PartialEq)]
 pub enum Mirroring {
