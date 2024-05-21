@@ -2,10 +2,11 @@ pub mod bus;
 pub mod cpu;
 pub mod opcode;
 pub mod rom;
+pub mod mem;
 
 use crate::bus::Bus;
 use crate::cpu::CPU;
-use crate::cpu::Mem;
+use crate::mem::Mem;
 use crate::rom::Rom;
 
 use rand::Rng;
@@ -107,12 +108,12 @@ fn main() {
     let mut cpu = CPU::new(bus);
     cpu.reset();
 
-    let mut screen_state = [0 as u8; 32 * 3 * 32];
+    let mut screen_state = [0u8; 32 * 3 * 32];
     let mut rng = rand::thread_rng();
 
     cpu.run_with_callback(move |cpu| {
         handle_user_input(cpu, &mut event_pump);
-        cpu.mem_write(0xFE, rng.gen_range(1, 16));
+        cpu.mem_write(0xFE, rng.gen_range(1u8..=16u8));
 
         if read_screen_state(cpu, &mut screen_state) {
             texture.update(None, &screen_state, 32 * 3).unwrap();

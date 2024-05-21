@@ -2,6 +2,7 @@ use bitflags::bitflags;
 use std::collections::HashMap;
 
 use crate::bus::Bus;
+use crate::mem::Mem;
 use crate::opcode;
 
 #[cfg(test)]
@@ -47,21 +48,6 @@ pub enum AddressingMode {
     Indirect_X,
     Indirect_Y,
     Implied,
-}
-
-pub trait Mem {
-    fn mem_read(&self, addr: u16) -> u8;
-    fn mem_write(&mut self, addr: u16, data: u8);
-    fn mem_read_u16(&self, pos: u16) -> u16 {
-        let lo = self.mem_read(pos);
-        let hi = self.mem_read(pos + 1);
-        u16::from_le_bytes([lo, hi])
-    }
-    fn mem_write_u16(&mut self, pos: u16, data: u16) {
-        let [lo, hi] = data.to_le_bytes();
-        self.mem_write(pos, lo);
-        self.mem_write(pos + 1, hi);
-    }
 }
 
 impl Mem for CPU {
@@ -217,7 +203,7 @@ impl CPU {
     }
 
     fn binary_add(&mut self, arg: u8) {
-        let carry_bit = (self.status & StatusFlags::CARRY).bits();
+        let carry_bit = StatusFlags::CARRY.bits() & self.status.bits();
         let (carry_in, carry_a) = self.register_a.overflowing_add(carry_bit);
         let (tmp, carry_b) = carry_in.overflowing_add(arg);
         
@@ -227,7 +213,7 @@ impl CPU {
     }
 
     fn bcd_add(&mut self, arg: u8) {
-        let carry_bit = (self.status & StatusFlags::CARRY).bits();
+        let carry_bit = StatusFlags::CARRY.bits() & self.status.bits();
         // abandon hope all ye who enter here
         
         let a = self.register_a as u16;
@@ -475,7 +461,7 @@ impl CPU {
                 carry = self.register_a & 0b1000_0000 == 0b1000_0000;
 
                 self.register_a <<= 1;
-                self.register_a |= self.status.bits & StatusFlags::CARRY.bits;
+                self.register_a |= self.status.bits() & StatusFlags::CARRY.bits();
                 self.update_zero_and_negative_flags(self.register_a);
             },
 
@@ -485,7 +471,7 @@ impl CPU {
                 carry = value & 0b1000_0000 == 0b1000_0000;
 
                 value <<= 1;
-                value |= self.status.bits & StatusFlags::CARRY.bits;
+                value |= self.status.bits() & StatusFlags::CARRY.bits();
                 self.mem_write(addr, value);
                 self.update_zero_and_negative_flags(value);
             },
@@ -516,7 +502,7 @@ impl CPU {
                 carry = value & 1 == 1;
 
                 value >>= 1;
-                value |= self.status.bits & 0b1000_0000;
+                value |= self.status.bits() & 0b1000_0000;
                 self.mem_write(addr, value);
                 self.update_zero_and_negative_flags(value);
             }
