@@ -1,6 +1,6 @@
 use super::*;
 use crate::bus::Bus;
-use crate::cpu::Mem;
+use crate::mem::Mem;
 use crate::rom::tests::test_rom;
 
 #[test]
