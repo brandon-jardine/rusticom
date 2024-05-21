@@ -615,12 +615,6 @@ impl CPU {
 
             let opcode = opcodes.get(&code).expect(&format!("OpCode {:x} is not recognized", code));
 
-            print!("execute: {:#04X} {:02X} {:02X} ", code, self.mem_read(self.program_counter), self.mem_read(self.program_counter + 1));
-            print!("status: {:08b} ", self.status);
-            print!("a: {:#04X} ", self.register_a);
-            print!("x: {:#04X} ", self.register_x);
-            println!("y: {:#04X} ", self.register_y);
-
             match code {
                 0x69 | 0x65 | 0x75 | 0x6D | 0x7D | 0x79 | 0x61 | 0x71 => {
                     self.adc(&opcode.mode);

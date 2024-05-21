@@ -25,8 +25,7 @@ fn create_rom(data: TestRomData) -> Vec<u8> {
     rom
 }
 
-#[test]
-fn test_rom() {
+pub fn test_rom() -> Rom {
     let test_rom = create_rom(TestRomData {
         header: vec![
             0x4E, 0x45, 0x53, 0x1A, 0x02, 0x01, 0x31, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -35,8 +34,13 @@ fn test_rom() {
         prg_rom: vec![1; 2 * PRG_ROM_PAGE_SIZE],
         chr_rom: vec![2; 1 * CHR_ROM_PAGE_SIZE],
     });
-    
-    let rom: Rom = Rom::new(&test_rom).unwrap();
+
+    Rom::new(&test_rom).unwrap()
+}
+
+#[test]
+fn test_test_rom() {
+    let rom: Rom = test_rom();
 
     assert_eq!(rom.chr_rom, vec!(2; 1 * CHR_ROM_PAGE_SIZE));
     assert_eq!(rom.prg_rom, vec!(1; 2 * PRG_ROM_PAGE_SIZE));
