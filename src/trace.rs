@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
-use crate::cpu::{Mem, CPU};
+use crate::cpu::CPU;
+use crate::mem::Mem;
 use crate::opcode;
 
 #[cfg(test)]

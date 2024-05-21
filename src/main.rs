@@ -1,11 +1,13 @@
 pub mod bus;
 pub mod cpu;
+pub mod mem;
 pub mod opcode;
 pub mod rom;
 pub mod trace;
 
 use crate::bus::Bus;
 use crate::cpu::CPU;
+use crate::mem::Mem;
 use crate::rom::Rom;
 use crate::trace::trace;
 

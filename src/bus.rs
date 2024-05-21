@@ -1,4 +1,4 @@
-use crate::cpu::Mem;
+use crate::mem::Mem;
 use crate::rom::Rom;
 
 const RAM_START: u16 = 0x0000;
