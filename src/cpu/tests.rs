@@ -1,6 +1,7 @@
 use super::*;
 
 use crate::bus::Bus;
+use crate::cpu::{STACK_RESET, STATUS_RESET};
 use crate::rom::Rom;
 
 fn new_cpu() -> CPU {
@@ -84,8 +85,8 @@ fn test_reset() {
     assert_eq!(cpu.register_x, 0);
     assert_eq!(cpu.register_a, 0);
     assert_eq!(cpu.register_y, 0);
-    assert_eq!(cpu.stack_pointer, 0xFF);
-    assert_eq!(cpu.status.bits(), 0);
+    assert_eq!(cpu.stack_pointer, STACK_RESET);
+    assert_eq!(cpu.status.bits(), STATUS_RESET.bits());
 }
 
 #[test]
@@ -146,9 +147,11 @@ fn test_txa_negative_flag() {
 #[test]
 fn test_tsx_move_s_to_x() {
     let mut cpu = new_cpu();
-    cpu.load_and_run(vec![0xBA, 0x00]);
+    cpu.load(vec![0xBA, 0x00]);
+    cpu.reset();
+    cpu.run();
 
-    assert_eq!(cpu.register_x, 0xff);
+    assert_eq!(cpu.register_x, STACK_RESET);
 }
 
 #[test]
@@ -1288,7 +1291,7 @@ fn test_pha_after_reset() {
     cpu.register_a = 0xDE;
     cpu.run();
 
-    assert_eq!(cpu.stack_pointer, 0xFE);
+    assert_eq!(cpu.stack_pointer, STACK_RESET - 1);
 
     let addr = u16::from_le_bytes([cpu.stack_pointer + 1, 0x01]);
     assert_eq!(cpu.mem_read(addr), 0xDE);
@@ -1315,7 +1318,7 @@ fn test_php_push_stack() {
     cpu.status = StatusFlags::from_bits_truncate(0b0101_1010);
     cpu.run();
 
-    assert_eq!(cpu.mem_read(0x01ff), cpu.status.bits());
+    assert_eq!(cpu.mem_read(0x01fd), 0b0111_1010);
 }
 
 #[test]
@@ -1354,7 +1357,7 @@ fn test_plp_pull_flags() {
     cpu.stack_pointer = 0xfe;
     cpu.run();
 
-    assert_eq!(cpu.status.bits(), 0b1111_1111);
+    assert_eq!(cpu.status.bits(), 0b1110_1111);
 }
 
 #[test]
@@ -1643,8 +1646,8 @@ fn test_jsr_stack() {
         0x00,
     ]);
 
-    assert_eq!(cpu.mem_read(0x01FF), 0x80);
-    assert_eq!(cpu.mem_read(0x01FE), 0x03);
+    assert_eq!(cpu.mem_read(0x01FD), 0x80);
+    assert_eq!(cpu.mem_read(0x01FC), 0x02);
 }
 
 #[test]
@@ -1859,5 +1862,26 @@ fn test_sbc_decimal_mode_wrap() {
     cpu.run();
 
     assert_eq!(cpu.register_a, 0x26);
+}
+
+#[test]
+fn test_rti() {
+    let mut cpu = new_cpu();
+    cpu.load(vec![
+        0xA9, 0xCC, // LDA #$FF
+        0x48,       // PHA
+        0xA9, 0xBB, // LDA #$BB
+        0x48,       // PHA
+        0xA9, 0xFF, // LDA #$CC
+        0x48,       // PHA
+        0x40,       // RTI
+    ]);
+    cpu.reset();
+    cpu.run();
+
+    // TODO: I'm not sure about the behavior of bits
+    // 4 & 5 when pulled off the stack here.
+    assert_eq!(cpu.status.bits(), 0b1110_1111);
+    assert_eq!(cpu.program_counter, u16::from_le_bytes([0xBB, 0xCC]) + 1);
 }
 
