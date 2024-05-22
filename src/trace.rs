@@ -44,7 +44,9 @@ pub fn trace(cpu: &CPU) -> String {
                 },
                 2 => {
                     // Branches fall here
-                    let addr = (cpu.program_counter + 2).wrapping_add(instr_byte_two.into());
+                    // We need some shenanigans here to make the arithmetic work
+                    let addr = (cpu.program_counter + 2)
+                        .wrapping_add_signed((instr_byte_two as i8) as i16);
                     format!("${:04X}                      ", addr)
                 },
                 3 => { 
