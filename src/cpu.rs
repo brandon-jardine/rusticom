@@ -463,6 +463,7 @@ impl CPU {
     }
 
     fn rol(&mut self, mode: &AddressingMode) {
+        let old_carry: bool = self.status.contains(StatusFlags::CARRY);
         let carry: bool;
 
         match mode {
@@ -470,7 +471,10 @@ impl CPU {
                 carry = self.register_a & 0b1000_0000 == 0b1000_0000;
 
                 self.register_a <<= 1;
-                self.register_a |= self.status.bits() & StatusFlags::CARRY.bits();
+
+                if old_carry {
+                    self.register_a |= 1;
+                }
                 self.update_zero_and_negative_flags(self.register_a);
             },
 
@@ -480,7 +484,11 @@ impl CPU {
                 carry = value & 0b1000_0000 == 0b1000_0000;
 
                 value <<= 1;
-                value |= self.status.bits() & StatusFlags::CARRY.bits();
+
+                if old_carry {
+                    value |= 1;
+                }
+
                 self.mem_write(addr, value);
                 self.update_zero_and_negative_flags(value);
             },
@@ -490,6 +498,7 @@ impl CPU {
     }
 
     fn ror(&mut self, mode: &AddressingMode) {
+        let old_carry: bool = self.status.contains(StatusFlags::CARRY);
         let carry: bool;
 
         match mode {
@@ -498,7 +507,7 @@ impl CPU {
 
                 self.register_a >>= 1;
                 
-                if self.status.contains(StatusFlags::CARRY) {
+                if old_carry {
                     self.register_a |= 0b1000_0000;
                 }
 
@@ -511,7 +520,11 @@ impl CPU {
                 carry = value & 1 == 1;
 
                 value >>= 1;
-                value |= self.status.bits() & 0b1000_0000;
+
+                if old_carry {
+                    value |= 0b1000_0000;
+                }
+                
                 self.mem_write(addr, value);
                 self.update_zero_and_negative_flags(value);
             }

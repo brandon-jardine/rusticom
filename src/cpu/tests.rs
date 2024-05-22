@@ -1398,6 +1398,20 @@ fn test_ror_carry_flag() {
 }
 
 #[test]
+fn test_ror_carry_absolute() {
+    let mut cpu = new_cpu();
+    cpu.load_and_run(vec![
+        0xA9, 0b0101_0111,
+        0x8D, 0x38, 0x0D,
+        0x6E, 0x38, 0x0D,
+        0x6E, 0x38, 0x0D,
+    ]);
+
+    assert!(cpu.status.contains(StatusFlags::CARRY));
+    assert_eq!(cpu.mem_read(0x0D38), 0b1001_0101);
+}
+
+#[test]
 fn test_ror_zero_flag() {
     let mut cpu = new_cpu();
     cpu.load_and_run(vec![

@@ -26,7 +26,12 @@ pub fn trace(cpu: &CPU) -> String {
         // secial cases for 'None' AddressingMode
         AddressingMode::None => {
             match opcode.len {
-                1 => String::from("                           "),
+                1 => {
+                    match opcode.code {
+                        0x0A | 0x4A | 0x2A | 0x6A => String::from("A                          "),
+                        _ => String::from("                           "),
+                    }
+                },
                 2 => {
                     // Branches fall here
                     let addr = (cpu.program_counter + 2).wrapping_add(instr_byte_two.into());
@@ -45,7 +50,7 @@ pub fn trace(cpu: &CPU) -> String {
                             cpu.mem_read_u16(mem_addr)
                         };
 
-                        format!("(${:04X}) = {:02X}                 ", mem_addr, indirect_ref)
+                        format!("(${:04X}) = {:04X}             ", mem_addr, indirect_ref)
                     } else {
                         format!("${:04X}                      ", mem_addr)
                     }
@@ -73,11 +78,14 @@ pub fn trace(cpu: &CPU) -> String {
             format!("${:02X},Y @ {:02X} = {:02X}            ", instr_byte_two, addr, value)
         },
         AddressingMode::Indirect_X  => {
-            let zp_offset: u8 = cpu.register_x.wrapping_add(instr_byte_two);
-            let target: u16 = cpu.mem_read_u16(zp_offset.into());
+            let addr: u8 = cpu.register_x.wrapping_add(instr_byte_two);
+            let lo = cpu.mem_read(addr as u16);
+            let hi = cpu.mem_read(addr.wrapping_add(1) as u16);
+            let target = (hi as u16) << 8 | (lo as u16);
+
             let value = cpu.mem_read(target);
 
-            format!("(${:02X},X) @ {:02X} = {:04X} = {:02X}   ", instr_byte_two, zp_offset, target, value)
+            format!("(${:02X},X) @ {:02X} = {:04X} = {:02X}   ", instr_byte_two, addr, target, value)
         },
         AddressingMode::Indirect_Y  => {
            let addr: u16 = cpu.mem_read_u16(instr_byte_two.into()).wrapping_add(cpu.register_y.into()); 
@@ -93,7 +101,11 @@ pub fn trace(cpu: &CPU) -> String {
 
             format!("(${:04X} = {:04X})             ", addr, target)
         },
-        AddressingMode::Absolute    => format!("${:02X}{:02X}                      ", instr_byte_three, instr_byte_two),
+        AddressingMode::Absolute    => {
+            let addr: u16 = u16::from_le_bytes([instr_byte_two, instr_byte_three]);
+            let value: u8 = cpu.mem_read(addr);
+            format!("${:04X} = {:02X}                 ", addr, value)
+        },
         AddressingMode::Absolute_X  => {
             let addr: u16 = u16::from_le_bytes([instr_byte_two, instr_byte_three])
                 .wrapping_add(cpu.register_x.into());
