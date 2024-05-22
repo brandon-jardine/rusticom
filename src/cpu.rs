@@ -857,6 +857,15 @@ impl CPU {
                     self.ora(&opcode.mode);
                 },
 
+                // RLA
+                0x23 | 0x27 | 0x2F | 0x33 |
+                0x37 | 0x3B | 0x3F => {
+                    self.rol(&opcode.mode);
+                    self.and(&opcode.mode);
+                }
+
+
+
                 0x00 => return, // BRK
                 _ => panic!("OpCode {:#02X} is not recognized", code),
             }

@@ -294,7 +294,7 @@ lazy_static! {
         OpCode::new_undoc(0xFF, "ISB", 3, 7, AddressingMode::Absolute_X),
 
         // Unofficial SLO
-        // Equiv. of ASL the value then ORA the value
+        // Equiv. of ASL then ORA
         OpCode::new_undoc(0x03, "SLO", 2, 8, AddressingMode::Indirect_X),
         OpCode::new_undoc(0x07, "SLO", 2, 5, AddressingMode::ZeroPage),
         OpCode::new_undoc(0x0F, "SLO", 3, 6, AddressingMode::Absolute),
@@ -302,6 +302,16 @@ lazy_static! {
         OpCode::new_undoc(0x17, "SLO", 2, 6, AddressingMode::ZeroPage_X),
         OpCode::new_undoc(0x1B, "SLO", 3, 7, AddressingMode::Absolute_Y),
         OpCode::new_undoc(0x1F, "SLO", 3, 7, AddressingMode::Absolute_X),
+
+        // Unofficial RLA
+        // Equiv. of ROL then AND
+        OpCode::new_undoc(0x23, "RLA", 2, 8, AddressingMode::Indirect_X),
+        OpCode::new_undoc(0x27, "RLA", 2, 5, AddressingMode::ZeroPage),
+        OpCode::new_undoc(0x2F, "RLA", 3, 6, AddressingMode::Absolute),
+        OpCode::new_undoc(0x33, "RLA", 2, 8, AddressingMode::Indirect_Y),
+        OpCode::new_undoc(0x37, "RLA", 2, 6, AddressingMode::ZeroPage_X),
+        OpCode::new_undoc(0x3B, "RLA", 3, 7, AddressingMode::Absolute_Y),
+        OpCode::new_undoc(0x3F, "RLA", 3, 7, AddressingMode::Absolute_X),
     ];
 
     pub static ref OPCODES_MAP: HashMap<u8, &'static OpCode> = {
