@@ -312,6 +312,16 @@ lazy_static! {
         OpCode::new_undoc(0x37, "RLA", 2, 6, AddressingMode::ZeroPage_X),
         OpCode::new_undoc(0x3B, "RLA", 3, 7, AddressingMode::Absolute_Y),
         OpCode::new_undoc(0x3F, "RLA", 3, 7, AddressingMode::Absolute_X),
+
+        // Unofficial SRE
+        // Equiv. of LSR then EOR
+        OpCode::new_undoc(0x43, "SRE", 2, 8, AddressingMode::Indirect_X),
+        OpCode::new_undoc(0x47, "SRE", 2, 5, AddressingMode::ZeroPage),
+        OpCode::new_undoc(0x4F, "SRE", 3, 6, AddressingMode::Absolute),
+        OpCode::new_undoc(0x53, "SRE", 2, 8, AddressingMode::Indirect_Y),
+        OpCode::new_undoc(0x57, "SRE", 2, 6, AddressingMode::ZeroPage_X),
+        OpCode::new_undoc(0x5B, "SRE", 3, 7, AddressingMode::Absolute_Y),
+        OpCode::new_undoc(0x5F, "SRE", 3, 7, AddressingMode::Absolute_X),
     ];
 
     pub static ref OPCODES_MAP: HashMap<u8, &'static OpCode> = {

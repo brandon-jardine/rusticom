@@ -311,23 +311,24 @@ impl CPU {
     }
 
     fn lsr(&mut self, mode: &AddressingMode) {
-        let carry = 1 & self.register_a == 1;
 
         match mode {
             AddressingMode::None => {
+                let carry = 1 & self.register_a == 1;
                 self.register_a >>= 1;
                 self.update_zero_and_negative_flags(self.register_a);
+                self.status.set(StatusFlags::CARRY, carry);
             },
 
             _ => {
                 let addr = self.get_operand_address(mode);
                 let value = self.mem_read(addr);
+                let carry = 1 & value == 1;
                 self.mem_write(addr, value >> 1);
                 self.update_zero_and_negative_flags(self.mem_read(addr));
+                self.status.set(StatusFlags::CARRY, carry);
             },
         }
-
-        self.status.set(StatusFlags::CARRY, carry);
     }
 
     fn branch(&mut self, condition: bool) {
@@ -864,7 +865,12 @@ impl CPU {
                     self.and(&opcode.mode);
                 }
 
-
+                // SRE
+                0x43 | 0x47 | 0x4F | 0x53 |
+                0x57 | 0x5B | 0x5F => {
+                    self.lsr(&opcode.mode);
+                    self.eor(&opcode.mode);
+                }
 
                 0x00 => return, // BRK
                 _ => panic!("OpCode {:#02X} is not recognized", code),
