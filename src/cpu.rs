@@ -842,6 +842,13 @@ impl CPU {
                     self.cmp(&opcode.mode);
                 },
 
+                // ISC (ISB)
+                0xE3 | 0xE7 | 0xEF | 0xF3 |
+                0xF7 | 0xFB | 0xFF => {
+                    self.inc(&opcode.mode);
+                    self.sbc(&opcode.mode);
+                },
+
                 0x00 => return, // BRK
                 _ => panic!("OpCode {:#02X} is not recognized", code),
             }

@@ -282,6 +282,16 @@ lazy_static! {
         OpCode::new_undoc(0xD7, "DCP", 2, 6, AddressingMode::ZeroPage_X),
         OpCode::new_undoc(0xDB, "DCP", 3, 7, AddressingMode::Absolute_Y),
         OpCode::new_undoc(0xDF, "DCP", 3, 7, AddressingMode::Absolute_X),
+
+        // Unofficial ISB (or ISC)
+        // Equiv. of INC then SBC
+        OpCode::new_undoc(0xE3, "ISB", 2, 8, AddressingMode::Indirect_X),
+        OpCode::new_undoc(0xE7, "ISB", 2, 5, AddressingMode::ZeroPage),
+        OpCode::new_undoc(0xEF, "ISB", 3, 6, AddressingMode::Absolute),
+        OpCode::new_undoc(0xF3, "ISB", 2, 8, AddressingMode::Indirect_Y),
+        OpCode::new_undoc(0xF7, "ISB", 2, 6, AddressingMode::ZeroPage_X),
+        OpCode::new_undoc(0xFB, "ISB", 3, 7, AddressingMode::Absolute_Y),
+        OpCode::new_undoc(0xFF, "ISB", 3, 7, AddressingMode::Absolute_X),
     ];
 
     pub static ref OPCODES_MAP: HashMap<u8, &'static OpCode> = {
