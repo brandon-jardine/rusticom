@@ -88,11 +88,14 @@ pub fn trace(cpu: &CPU) -> String {
             format!("(${:02X},X) @ {:02X} = {:04X} = {:02X}   ", instr_byte_two, addr, target, value)
         },
         AddressingMode::Indirect_Y  => {
-            let zp_ptr = cpu.mem_read_u16(u16::from_le_bytes([instr_byte_two, 0x00]));
-            let deref = zp_ptr.wrapping_add(cpu.register_y as u16);
+            let base = cpu.mem_read(cpu.program_counter + 1);
+            let lo = cpu.mem_read(base as u16);
+            let hi = cpu.mem_read(base.wrapping_add(1) as u16);
+            let deref_base = (hi as u16) << 8 | (lo as u16);
+            let deref = deref_base.wrapping_add(cpu.register_y as u16);
             let value = cpu.mem_read(deref);
 
-            format!("(${:02X}),Y = {:04X} @ {:04X} = {:02X} ", instr_byte_two, zp_ptr, deref, value)
+            format!("(${:02X}),Y = {:04X} @ {:04X} = {:02X} ", instr_byte_two, deref_base, deref, value)
         },
 
         // length 3 modes
@@ -108,22 +111,20 @@ pub fn trace(cpu: &CPU) -> String {
             format!("${:04X} = {:02X}                 ", addr, value)
         },
         AddressingMode::Absolute_X  => {
-            let addr: u16 = u16::from_le_bytes([instr_byte_two, instr_byte_three])
-                .wrapping_add(cpu.register_x.into());
-            let target: u16 = cpu.mem_read_u16(addr);
+            let base = cpu.mem_read_u16(cpu.program_counter + 1);
+            let addr = base.wrapping_add(cpu.register_x as u16);
 
-            let value = cpu.mem_read(target);
+            let value = cpu.mem_read(addr);
 
-            format!("${:04X},X @ {:04X} = {:02X}", addr, target, value)
+            format!("${:04X},X @ {:04X} = {:02X}        ", base, addr, value)
         },
         AddressingMode::Absolute_Y  => {
-            let addr: u16 = u16::from_le_bytes([instr_byte_two, instr_byte_three])
-                .wrapping_add(cpu.register_y.into());
-            let target: u16 = cpu.mem_read_u16(addr);
+            let base = cpu.mem_read_u16(cpu.program_counter + 1);
+            let addr = base.wrapping_add(cpu.register_y as u16);
 
-            let value = cpu.mem_read(target);
+            let value = cpu.mem_read(addr);
 
-            format!("${:04X},Y @ {:04X} = {:02X}", addr, target, value)
+            format!("${:04X},Y @ {:04X} = {:02X}        ", base, addr, value)
         },
     };
 
