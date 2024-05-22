@@ -408,6 +408,8 @@ impl CPU {
         self.status = StatusFlags::from_bits_truncate(self.stack_pop());
         self.status.remove(StatusFlags::BREAK);
         self.status.insert(StatusFlags::BREAK2);
+
+        self.program_counter = self.stack_pop_u16();
     }
 
     fn inc(&mut self, mode: &AddressingMode) {
