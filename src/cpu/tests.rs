@@ -1723,6 +1723,7 @@ fn test_adc_overflow() {
 #[test]
 fn test_adc_decimal_mode() {
     let mut cpu = new_cpu();
+    cpu.enable_decimal = true;
     cpu.load(vec![
         0xF8, // SED
         0x69, 0x19,
@@ -1737,6 +1738,7 @@ fn test_adc_decimal_mode() {
 #[test]
 fn test_adc_decimal_carry() {
     let mut cpu = new_cpu();
+    cpu.enable_decimal = true;
     // 0x58 + 0x46 + 0x01 (carry) = 105 (0x05 + carry)
     cpu.load(vec![
         0xF8, // SED
@@ -1754,6 +1756,7 @@ fn test_adc_decimal_carry() {
 #[test]
 fn test_adc_decimal_add_81_and_92() {
     let mut cpu = new_cpu();
+    cpu.enable_decimal = true;
     cpu.load(vec![
         0xF8,
         0x69, 0x92,
@@ -1771,6 +1774,7 @@ fn test_adc_decimal_add_81_and_92() {
 #[test]
 fn test_adc_decimal_add_zero() {
     let mut cpu = new_cpu();
+    cpu.enable_decimal = true;
     cpu.load(vec![
         0xF8,
         0x69, 0x00,
@@ -1785,6 +1789,7 @@ fn test_adc_decimal_add_zero() {
 #[test]
 fn test_adc_decimal_9_plus_11() {
     let mut cpu = new_cpu();
+    cpu.enable_decimal = true;
     cpu.load(vec![
         0xF8,
         0x69, 0x11,
@@ -1827,6 +1832,7 @@ fn test_sbc() {
 #[test]
 fn test_sbc_decimal_mode() {
     let mut cpu = new_cpu();
+    cpu.enable_decimal = true;
     cpu.load(vec![
         0x38, 0xB8,
         0xF8,
@@ -1842,6 +1848,7 @@ fn test_sbc_decimal_mode() {
 #[test]
 fn test_sbc_decimal_mode_wrap() {
     let mut cpu = new_cpu();
+    cpu.enable_decimal = true;
     cpu.load(vec![
         0x38, 0xB8,
         0xF8,

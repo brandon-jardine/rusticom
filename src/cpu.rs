@@ -34,6 +34,7 @@ pub struct CPU {
     pub status: StatusFlags,
     pub program_counter: u16,
     pub bus: Bus,
+    pub enable_decimal: bool,
     pause: bool,
 }
 
@@ -82,6 +83,7 @@ impl CPU {
             status: STATUS_RESET,
             program_counter: 0,
             bus,
+            enable_decimal: false,
             pause: false,
         }
     }
@@ -184,7 +186,7 @@ impl CPU {
         let addr = self.get_operand_address(mode);
         let mem_value = self.mem_read(addr);
 
-        if self.status.contains(StatusFlags::DECIMAL_MODE) {
+        if self.enable_decimal && self.status.contains(StatusFlags::DECIMAL_MODE) {
             self.bcd_add(mem_value);
         } else {
             self.binary_add(mem_value);
@@ -197,7 +199,7 @@ impl CPU {
         let addr = self.get_operand_address(mode);
         let mem_value = self.mem_read(addr);
 
-        if self.status.contains(StatusFlags::DECIMAL_MODE) {
+        if self.enable_decimal && self.status.contains(StatusFlags::DECIMAL_MODE) {
             self.bcd_sub(mem_value);
         } else {
             self.binary_add(!mem_value);
