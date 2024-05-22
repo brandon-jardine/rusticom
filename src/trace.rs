@@ -13,6 +13,8 @@ pub fn trace(cpu: &CPU) -> String {
     let instr_byte_one: u8 = cpu.mem_read(cpu.program_counter);
     let instr_byte_two: u8 = cpu.mem_read(cpu.program_counter + 1);
     let instr_byte_three: u8 = cpu.mem_read(cpu.program_counter + 2);
+    let u16_addr = u16::from_le_bytes([instr_byte_two, instr_byte_three]);
+
 
     let opcode = opcodes.get(&instr_byte_one).expect(&format!("OpCode {:#02X} is not recognized", instr_byte_one));
 
@@ -20,6 +22,14 @@ pub fn trace(cpu: &CPU) -> String {
         1 => format!("{:02X}      ", instr_byte_one),
         2 => format!("{:02X} {:02X}   ", instr_byte_one, instr_byte_two),
         _ => format!("{:02X} {:02X} {:02X}", instr_byte_one, instr_byte_two, instr_byte_three),
+    };
+
+    let (mem_addr, stored_value) = match opcode.mode {
+        AddressingMode::Immediate | AddressingMode::None => (0, 0),
+        _ => {
+            let addr = cpu.resolve_address(&opcode.mode, cpu.program_counter + 1);
+            (addr, cpu.mem_read(addr))
+        }
     };
     
     let opcode_args = match opcode.mode {
@@ -60,72 +70,31 @@ pub fn trace(cpu: &CPU) -> String {
         },
 
         // length 1 modes
-        AddressingMode::Implied     => format!("                           "),
+        AddressingMode::Implied     => String::from("                           "),
 
         // length 2 modes
         AddressingMode::Immediate   => format!("#${:02X}                       ", cpu.mem_read(cpu.program_counter + 1)),
-        AddressingMode::ZeroPage    => format!("${:02X} = {:02X}                   ", instr_byte_two, cpu.mem_read(instr_byte_two.into())),
-        AddressingMode::ZeroPage_X  => {
-            let addr = instr_byte_two.wrapping_add(cpu.register_x);
-            let value = cpu.mem_read(addr.into());
-
-            format!("${:02X},X @ {:02X} = {:02X}            ", instr_byte_two, addr, value)
-        },
-        AddressingMode::ZeroPage_Y  => {
-            let addr = instr_byte_two.wrapping_add(cpu.register_y);
-            let value = cpu.mem_read(addr.into());
-
-            format!("${:02X},Y @ {:02X} = {:02X}            ", instr_byte_two, addr, value)
-        },
+        AddressingMode::ZeroPage    => format!("${:02X} = {:02X}                   ", mem_addr, stored_value),
+        AddressingMode::ZeroPage_X  => format!("${:02X},X @ {:02X} = {:02X}            ", instr_byte_two, mem_addr, stored_value),
+        AddressingMode::ZeroPage_Y  => format!("${:02X},Y @ {:02X} = {:02X}            ", instr_byte_two, mem_addr, stored_value),
         AddressingMode::Indirect_X  => {
-            let addr: u8 = cpu.register_x.wrapping_add(instr_byte_two);
-            let lo = cpu.mem_read(addr as u16);
-            let hi = cpu.mem_read(addr.wrapping_add(1) as u16);
-            let target = (hi as u16) << 8 | (lo as u16);
-
-            let value = cpu.mem_read(target);
-
-            format!("(${:02X},X) @ {:02X} = {:04X} = {:02X}   ", instr_byte_two, addr, target, value)
+            let target = instr_byte_two.wrapping_add(cpu.register_x);
+            format!("(${:02X},X) @ {:02X} = {:04X} = {:02X}   ", instr_byte_two,target, mem_addr, stored_value)
         },
         AddressingMode::Indirect_Y  => {
-            let base = cpu.mem_read(cpu.program_counter + 1);
-            let lo = cpu.mem_read(base as u16);
-            let hi = cpu.mem_read(base.wrapping_add(1) as u16);
-            let deref_base = (hi as u16) << 8 | (lo as u16);
-            let deref = deref_base.wrapping_add(cpu.register_y as u16);
-            let value = cpu.mem_read(deref);
-
-            format!("(${:02X}),Y = {:04X} @ {:04X} = {:02X} ", instr_byte_two, deref_base, deref, value)
+            // I am not sure why this works with wrapping_sub
+            let target = mem_addr.wrapping_sub(cpu.register_y as u16);
+            format!("(${:02X}),Y = {:04X} @ {:04X} = {:02X} ", instr_byte_two, target, mem_addr, stored_value)
         },
 
         // length 3 modes
-        AddressingMode::Indirect    => {
-            let addr: u16 = u16::from_le_bytes([instr_byte_two, instr_byte_three]);
-            let target: u16 = cpu.mem_read_u16(addr);
+        AddressingMode::Absolute    => format!("${:04X} = {:02X}                 ", mem_addr, stored_value),
+        AddressingMode::Absolute_X  => format!("${:04X},X @ {:04X} = {:02X}        ", u16_addr, mem_addr, stored_value),
+        AddressingMode::Absolute_Y  => format!("${:04X},Y @ {:04X} = {:02X}        ", u16_addr, mem_addr, stored_value),
 
-            format!("(${:04X} = {:04X})             ", addr, target)
-        },
-        AddressingMode::Absolute    => {
-            let addr: u16 = u16::from_le_bytes([instr_byte_two, instr_byte_three]);
-            let value: u8 = cpu.mem_read(addr);
-            format!("${:04X} = {:02X}                 ", addr, value)
-        },
-        AddressingMode::Absolute_X  => {
-            let base = cpu.mem_read_u16(cpu.program_counter + 1);
-            let addr = base.wrapping_add(cpu.register_x as u16);
-
-            let value = cpu.mem_read(addr);
-
-            format!("${:04X},X @ {:04X} = {:02X}        ", base, addr, value)
-        },
-        AddressingMode::Absolute_Y  => {
-            let base = cpu.mem_read_u16(cpu.program_counter + 1);
-            let addr = base.wrapping_add(cpu.register_y as u16);
-
-            let value = cpu.mem_read(addr);
-
-            format!("${:04X},Y @ {:04X} = {:02X}        ", base, addr, value)
-        },
+        _ => {
+            panic!("mode {:?} is not supported", opcode.mode);
+        }
     };
 
     format!(
