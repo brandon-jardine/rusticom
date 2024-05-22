@@ -835,6 +835,13 @@ impl CPU {
                 // Duplicated SBC 
                 0xEB => self.sbc(&opcode.mode),
 
+                // DCP
+                0xC3 | 0xC7 | 0xCF | 0xD3 |
+                0xD7 | 0xDB | 0xDF => {
+                    self.dec(&opcode.mode);
+                    self.cmp(&opcode.mode);
+                },
+
                 0x00 => return, // BRK
                 _ => panic!("OpCode {:#02X} is not recognized", code),
             }

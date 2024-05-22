@@ -272,6 +272,16 @@ lazy_static! {
 
         // Duplicate SDB immediate
         OpCode::new_undoc(0xEB, "SBC", 2, 2, AddressingMode::Immediate),
+
+        // Unofficial DCP
+        // Equiv. of DEC then CMP
+        OpCode::new_undoc(0xC3, "DCP", 2, 8, AddressingMode::Indirect_X),
+        OpCode::new_undoc(0xC7, "DCP", 2, 5, AddressingMode::ZeroPage),
+        OpCode::new_undoc(0xCF, "DCP", 3, 6, AddressingMode::Absolute),
+        OpCode::new_undoc(0xD3, "DCP", 2, 8, AddressingMode::Indirect_Y),
+        OpCode::new_undoc(0xD7, "DCP", 2, 6, AddressingMode::ZeroPage_X),
+        OpCode::new_undoc(0xDB, "DCP", 3, 7, AddressingMode::Absolute_Y),
+        OpCode::new_undoc(0xDF, "DCP", 3, 7, AddressingMode::Absolute_X),
     ];
 
     pub static ref OPCODES_MAP: HashMap<u8, &'static OpCode> = {
