@@ -88,10 +88,11 @@ pub fn trace(cpu: &CPU) -> String {
             format!("(${:02X},X) @ {:02X} = {:04X} = {:02X}   ", instr_byte_two, addr, target, value)
         },
         AddressingMode::Indirect_Y  => {
-           let addr: u16 = cpu.mem_read_u16(instr_byte_two.into()).wrapping_add(cpu.register_y.into()); 
-           let value = cpu.mem_read(addr);
+            let zp_ptr = cpu.mem_read_u16(u16::from_le_bytes([instr_byte_two, 0x00]));
+            let deref = zp_ptr.wrapping_add(cpu.register_y as u16);
+            let value = cpu.mem_read(deref);
 
-           format!("(${:02X}),Y = {:04X} @ {:04X} = {:02X} ", instr_byte_two, addr, addr, value)
+            format!("(${:02X}),Y = {:04X} @ {:04X} = {:02X} ", instr_byte_two, zp_ptr, deref, value)
         },
 
         // length 3 modes
