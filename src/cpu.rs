@@ -290,23 +290,24 @@ impl CPU {
     }
 
     fn asl(&mut self, mode: &AddressingMode) {
-        let carry = 0b1000_0000 & self.register_a == 0b1000_0000;
 
         match mode {
             AddressingMode::None => {
+                let carry = 0b1000_0000 & self.register_a == 0b1000_0000;
                 self.register_a <<= 1;
                 self.update_zero_and_negative_flags(self.register_a);
+                self.status.set(StatusFlags::CARRY, carry);
             },
 
             _ => {
                 let addr = self.get_operand_address(mode);
                 let value = self.mem_read(addr);
+                let carry = 0b1000_0000 & value == 0b1000_0000;
                 self.mem_write(addr, value << 1);
                 self.update_zero_and_negative_flags(self.mem_read(addr));
+                self.status.set(StatusFlags::CARRY, carry);
             },
         }
-
-        self.status.set(StatusFlags::CARRY, carry);
     }
 
     fn lsr(&mut self, mode: &AddressingMode) {
@@ -465,7 +466,7 @@ impl CPU {
         let value = self.mem_read(addr);
 
         self.register_a = self.register_a | value;
-         self.update_zero_and_negative_flags(self.register_a);
+        self.update_zero_and_negative_flags(self.register_a);
     }
 
     fn rol(&mut self, mode: &AddressingMode) {
@@ -847,6 +848,13 @@ impl CPU {
                 0xF7 | 0xFB | 0xFF => {
                     self.inc(&opcode.mode);
                     self.sbc(&opcode.mode);
+                },
+
+                // SLO
+                0x03 | 0x07 | 0x0F | 0x13 |
+                0x17 | 0x1B | 0x1F => {
+                    self.asl(&opcode.mode);
+                    self.ora(&opcode.mode);
                 },
 
                 0x00 => return, // BRK
