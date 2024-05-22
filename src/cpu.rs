@@ -311,7 +311,6 @@ impl CPU {
     }
 
     fn lsr(&mut self, mode: &AddressingMode) {
-
         match mode {
             AddressingMode::None => {
                 let carry = 1 & self.register_a == 1;
@@ -870,6 +869,13 @@ impl CPU {
                 0x57 | 0x5B | 0x5F => {
                     self.lsr(&opcode.mode);
                     self.eor(&opcode.mode);
+                }
+
+                // RRA
+                0x63 | 0x67 | 0x6F | 0x73 |
+                0x77 | 0x7B | 0x7F => {
+                    self.ror(&opcode.mode);
+                    self.adc(&opcode.mode);
                 }
 
                 0x00 => return, // BRK
