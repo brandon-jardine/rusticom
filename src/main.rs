@@ -11,12 +11,23 @@ use crate::mem::Mem;
 use crate::rom::Rom;
 use crate::trace::trace;
 
+use clap::Parser;
+use clap_num::maybe_hex();
 use rand::Rng;
 use sdl2::event::Event;
 use sdl2::EventPump;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 use sdl2::pixels::PixelFormatEnum;
+
+#[derive(Parser)]
+struct Cli {
+    #[arg(short, long)]
+    rom: String,
+
+    #[arg(short, long, value_parser=maybe_hex::<u16>)]
+    entry_point: Option<u16>,
+}
 
 #[macro_use]
 extern crate lazy_static;
@@ -87,6 +98,8 @@ fn read_screen_state(cpu: &CPU, frame: &mut [u8; 32 * 3 * 32]) -> bool {
 }
 
 fn main() {
+    let cli = Cli::parse();
+
     let sdl_context = sdl2::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
     let window = video_subsystem
@@ -103,30 +116,30 @@ fn main() {
     let creator = canvas.texture_creator();
     let mut texture = creator.create_texture_target(PixelFormatEnum::RGB24, 32, 32).unwrap();
 
-    let bytes: Vec<u8> = std::fs::read("nestest.nes").unwrap();
+    let bytes: Vec<u8> = std::fs::read(cli.rom).unwrap();
     let rom = Rom::new(&bytes).unwrap();
 
     let bus = Bus::new(rom);
     let mut cpu = CPU::new(bus);
     cpu.reset();
-    cpu.program_counter = 0xC000;
+    cpu.program_counter = cli.entry_point.unwrap_or(cpu.program_counter);
 
-    // let mut screen_state = [0u8; 32 * 3 * 32];
-    // let mut rng = rand::thread_rng();
+    let mut screen_state = [0u8; 32 * 3 * 32];
+    let mut rng = rand::thread_rng();
 
     cpu.run_with_callback(move |cpu| {
         println!("{}", trace(cpu));
 
-        // handle_user_input(cpu, &mut event_pump);
-        // cpu.mem_write(0xFE, rng.gen_range(1u8..=16u8));
+        handle_user_input(cpu, &mut event_pump);
+        cpu.mem_write(0xFE, rng.gen_range(1u8..=16u8));
 
-        // if read_screen_state(cpu, &mut screen_state) {
-        //     texture.update(None, &screen_state, 32 * 3).unwrap();
-        //     canvas.copy(&texture, None, None).unwrap();
-        //     canvas.present();
-        // }
+        if read_screen_state(cpu, &mut screen_state) {
+            texture.update(None, &screen_state, 32 * 3).unwrap();
+            canvas.copy(&texture, None, None).unwrap();
+            canvas.present();
+        }
 
-        // ::std::thread::sleep(std::time::Duration::new(0, 25_000));
+        ::std::thread::sleep(std::time::Duration::new(0, 25_000));
     });
 
     
