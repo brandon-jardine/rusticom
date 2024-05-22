@@ -807,17 +807,33 @@ impl CPU {
 
                 0x1A | 0x3A | 0x5A | 0x7A | 0xDA | 0xFA => {
                     // NOP
-                }
+                },
 
                 0x80 | 0x82 | 0x89 | 0xC2 | 0xE2 => {
                     // NOP
-                }
+                },
 
                 0x0C | 0x1C | 0x3C | 0x5C | 0x7C |
                 0xDC | 0xFC | 0x04 | 0x44 | 0x64 |
                 0x14 | 0x34 | 0x54 | 0x74 | 0xD4 | 0xF4 => {
                     // NOP
-                }
+                },
+
+                0xA3 | 0xA7 | 0xAF |
+                0xB3 | 0xB7 | 0xBF => {
+                    // LAX
+                    self.lda(&opcode.mode);
+                    self.tax();
+                },
+
+                0x83 | 0x87 | 0x8F | 0x97 => {
+                    // SAX
+                    let value = self.register_a & self.register_x;
+                    self.mem_write(self.get_operand_address(&opcode.mode), value);
+                },
+
+                // Duplicated SBC 
+                0xEB => self.sbc(&opcode.mode),
 
                 0x00 => return, // BRK
                 _ => panic!("OpCode {:#02X} is not recognized", code),

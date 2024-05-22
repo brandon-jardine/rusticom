@@ -253,6 +253,25 @@ lazy_static! {
         OpCode::new_undoc(0x74, "NOP", 2, 4, AddressingMode::ZeroPage_X),
         OpCode::new_undoc(0xD4, "NOP", 2, 4, AddressingMode::ZeroPage_X),
         OpCode::new_undoc(0xF4, "NOP", 2, 4, AddressingMode::ZeroPage_X),
+
+        // Unofficial LAX
+        // Shortcut for LDA then TAX
+        OpCode::new_undoc(0xA3, "LAX", 2, 6, AddressingMode::Indirect_X),
+        OpCode::new_undoc(0xA7, "LAX", 2, 3, AddressingMode::ZeroPage),
+        OpCode::new_undoc(0xAF, "LAX", 3, 4, AddressingMode::Absolute),
+        OpCode::new_undoc(0xB3, "LAX", 2, 5, AddressingMode::Indirect_Y),
+        OpCode::new_undoc(0xB7, "LAX", 2, 4, AddressingMode::ZeroPage_Y),
+        OpCode::new_undoc(0xBF, "LAX", 3, 4, AddressingMode::Absolute_Y),
+
+        // Unofficial SAX
+        // Store AND of A and X (no flags affected)
+        OpCode::new_undoc(0x83, "SAX", 2, 6, AddressingMode::Indirect_X),
+        OpCode::new_undoc(0x87, "SAX", 2, 3, AddressingMode::ZeroPage),
+        OpCode::new_undoc(0x8F, "SAX", 3, 4, AddressingMode::Absolute),
+        OpCode::new_undoc(0x97, "SAX", 2, 4, AddressingMode::ZeroPage_Y),
+
+        // Duplicate SDB immediate
+        OpCode::new_undoc(0xEB, "SBC", 2, 2, AddressingMode::Immediate),
     ];
 
     pub static ref OPCODES_MAP: HashMap<u8, &'static OpCode> = {
