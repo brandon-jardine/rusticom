@@ -9,6 +9,7 @@ use crate::opcode;
 mod tests;
 
 bitflags! {
+    #[derive(Clone)]
     pub struct StatusFlags: u8 {
         const CARRY             = 0b0000_0001;
         const ZERO              = 0b0000_0010;
@@ -22,7 +23,8 @@ bitflags! {
 }
 
 const STACK: u16 = 0x0100;
-const STACK_RESET: u8 = 0xFF;
+const STACK_RESET: u8 = 0xFD;
+const STATUS_RESET: StatusFlags = StatusFlags::from_bits_truncate(0b0010_0100);
 
 pub struct CPU {
     pub register_a: u8,
@@ -49,6 +51,7 @@ pub enum AddressingMode {
     Indirect_X,
     Indirect_Y,
     Implied,
+    None,
 }
 
 impl Mem for CPU {
@@ -76,7 +79,7 @@ impl CPU {
             register_x: 0,
             register_y: 0,
             stack_pointer: STACK_RESET,
-            status: StatusFlags::from_bits_truncate(0b0010_0100),
+            status: STATUS_RESET,
             program_counter: 0,
             bus,
             pause: false,
@@ -109,7 +112,7 @@ impl CPU {
         self.register_x = 0;
         self.register_y = 0;
         self.stack_pointer = STACK_RESET;
-        self.status = StatusFlags::from_bits_truncate(0);
+        self.status = STATUS_RESET;
 
         self.program_counter = self.mem_read_u16(0xFFFC);
     }
@@ -171,7 +174,7 @@ impl CPU {
                 let deref = deref_base.wrapping_add(self.register_y as u16);
                 deref
             },
-            AddressingMode::Implied => {
+            _ => {
                 panic!("mode {:?} is not supported", mode);
             },
         }
@@ -282,7 +285,7 @@ impl CPU {
         let carry = 0b1000_0000 & self.register_a == 0b1000_0000;
 
         match mode {
-            AddressingMode::Implied => {
+            AddressingMode::None => {
                 self.register_a <<= 1;
                 self.update_zero_and_negative_flags(self.register_a);
             },
@@ -302,7 +305,7 @@ impl CPU {
         let carry = 1 & self.register_a == 1;
 
         match mode {
-            AddressingMode::Implied => {
+            AddressingMode::None => {
                 self.register_a >>= 1;
                 self.update_zero_and_negative_flags(self.register_a);
             },
@@ -320,7 +323,7 @@ impl CPU {
 
     fn branch(&mut self, condition: bool) {
         if condition {
-            let jump = self.mem_read(self.program_counter) as i8;
+            let jump: i8 = self.mem_read(self.program_counter) as i8;
             let jump_addr = self.program_counter
                 .wrapping_add(1)
                 .wrapping_add(jump as u16);
@@ -390,18 +393,19 @@ impl CPU {
         self.update_zero_and_negative_flags(self.register_a);
     }
 
-    fn jmp(&mut self, mode: &AddressingMode) {
-        let addr = self.get_operand_address(mode);
-        self.program_counter = addr;
-    }
-
     fn jsr(&mut self) {
-       self.stack_push_u16(self.program_counter + 2);
+       self.stack_push_u16(self.program_counter + 2 - 1);
        self.program_counter = self.mem_read_u16(self.program_counter);
     }
 
     fn rts(&mut self) {
-        self.program_counter = self.stack_pop_u16();
+        self.program_counter = self.stack_pop_u16() + 1;
+    }
+
+    fn rti(&mut self) {
+        self.status = StatusFlags::from_bits_truncate(self.stack_pop());
+        self.status.remove(StatusFlags::BREAK);
+        self.status.insert(StatusFlags::BREAK2);
     }
 
     fn inc(&mut self, mode: &AddressingMode) {
@@ -458,7 +462,7 @@ impl CPU {
         let carry: bool;
 
         match mode {
-            AddressingMode::Implied => {
+            AddressingMode::None => {
                 carry = self.register_a & 0b1000_0000 == 0b1000_0000;
 
                 self.register_a <<= 1;
@@ -485,7 +489,7 @@ impl CPU {
         let carry: bool;
 
         match mode {
-            AddressingMode::Implied => {
+            AddressingMode::None => {
                 carry = self.register_a & 1 == 1;
 
                 self.register_a >>= 1;
@@ -580,6 +584,13 @@ impl CPU {
         u16::from_le_bytes([lo, hi])
     }
 
+    fn php(&mut self) {
+        let mut flags = self.status.clone();
+        flags.insert(StatusFlags::BREAK);
+        flags.insert(StatusFlags::BREAK2);
+        self.stack_push(flags.bits());
+    }
+
     fn pla(&mut self) {
         self.register_a = self.stack_pop();
         self.update_zero_and_negative_flags(self.register_a);
@@ -587,6 +598,8 @@ impl CPU {
 
     fn plp(&mut self) {
         self.status = StatusFlags::from_bits_truncate(self.stack_pop());
+        self.status.remove(StatusFlags::BREAK);
+        self.status.insert(StatusFlags::BREAK2);
     }
 
     fn update_zero_and_negative_flags(&mut self, result: u8) {
@@ -666,9 +679,33 @@ impl CPU {
                     self.eor(&opcode.mode);
                 },
 
-                0x4C | 0x6C => self.jmp(&opcode.mode),
+                0x6C => {
+                    // JMP indirect
+                    let mem_addr = self.mem_read_u16(self.program_counter);
+                    //6502 bug mode with with page boundary:
+                    //  if address $3000 contains $40, $30FF contains $80, and $3100 contains $50,
+                    // the result of JMP ($30FF) will be a transfer of control to $4080 rather than $5080 as you intended
+                    // i.e. the 6502 took the low byte of the address from $30FF and the high byte from $3000
+                    let indirect_ref = if mem_addr & 0x00FF == 0x00FF {
+                        let lo = self.mem_read(mem_addr);
+                        let hi = self.mem_read(mem_addr & 0xFF00);
+                        u16::from_le_bytes([lo, hi])
+                    } else {
+                        self.mem_read_u16(mem_addr)
+                    };
+
+                    self.program_counter = indirect_ref;
+                },
+
+                0x4C => {
+                    // JMP absolute
+                    self.program_counter = self.mem_read_u16(self.program_counter);
+                },
+
                 0x20 => self.jsr(),
                 0x60 => self.rts(),
+
+                0x40 => self.rti(),
 
                 0xE6 | 0xF6 | 0xEE | 0xFE => {
                     self.inc(&opcode.mode);
@@ -702,7 +739,7 @@ impl CPU {
                 },
 
                 0x48 => self.stack_push(self.register_a), // PHA
-                0x08 => self.stack_push(self.status.bits()), // PHP
+                0x08 => self.php(), 
                 0x68 => self.pla(),
                 0x28 => self.plp(),
                 
