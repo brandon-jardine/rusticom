@@ -12,7 +12,7 @@ use crate::rom::Rom;
 use crate::trace::trace;
 
 use clap::Parser;
-use clap_num::maybe_hex();
+use clap_num::maybe_hex;
 use rand::Rng;
 use sdl2::event::Event;
 use sdl2::EventPump;
