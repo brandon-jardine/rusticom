@@ -651,6 +651,8 @@ impl CPU {
             let opcode = opcodes.get(&code).expect(&format!("OpCode {:x} is not recognized", code));
 
             match code {
+                // OFFICIAL OPCODES
+
                 0x69 | 0x65 | 0x75 | 0x6D | 0x7D | 0x79 | 0x61 | 0x71 => {
                     self.adc(&opcode.mode);
                 },
@@ -801,8 +803,24 @@ impl CPU {
                 0x9A => self.txs(),
                 0x98 => self.tya(),
 
+                // UN-OFFICIAL OPCODES
+
+                0x1A | 0x3A | 0x5A | 0x7A | 0xDA | 0xFA => {
+                    // NOP
+                }
+
+                0x80 | 0x82 | 0x89 | 0xC2 | 0xE2 => {
+                    // NOP
+                }
+
+                0x0C | 0x1C | 0x3C | 0x5C | 0x7C |
+                0xDC | 0xFC | 0x04 | 0x44 | 0x64 |
+                0x14 | 0x34 | 0x54 | 0x74 | 0xD4 | 0xF4 => {
+                    // NOP
+                }
+
                 0x00 => return, // BRK
-                _ => todo!(),
+                _ => panic!("OpCode {:#02X} is not recognized", code),
             }
 
             if program_counter_state == self.program_counter {

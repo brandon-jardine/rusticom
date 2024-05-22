@@ -98,9 +98,14 @@ pub fn trace(cpu: &CPU) -> String {
     };
 
     format!(
-        "{:04X}  {}  {} {} A:{:02X} X:{:02X} Y:{:02X} P:{:02X} SP:{:02X}",
+        "{:04X}  {} {}{} {} A:{:02X} X:{:02X} Y:{:02X} P:{:02X} SP:{:02X}",
         cpu.program_counter,
         opcode_hex,
+        if opcode.undocumented {
+            "*"
+        } else {
+            " "
+        },
         opcode.mnemonic,
         opcode_args,
         cpu.register_a,

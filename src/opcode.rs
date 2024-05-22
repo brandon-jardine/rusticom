@@ -7,6 +7,7 @@ pub struct OpCode {
     pub len: u8,
     pub cycles: u8,
     pub mode: AddressingMode,
+    pub undocumented: bool,
 }
 
 impl OpCode {
@@ -17,12 +18,22 @@ impl OpCode {
             len,
             cycles,
             mode,
+            undocumented: false,
+        }
+    }
+
+    pub fn new_undoc(code: u8, mnemonic: &'static str, len: u8, cycles: u8, mode: AddressingMode) -> Self {
+        OpCode {
+            undocumented: true,
+            ..OpCode::new(code, mnemonic, len, cycles, mode)
         }
     }
 }
 
 lazy_static! {
     pub static ref CPU_OP_CODES: Vec<OpCode> = vec![
+        // OFFICIAL OPCODES
+
         OpCode::new(0x69, "ADC", 2, 2, AddressingMode::Immediate),
         OpCode::new(0x65, "ADC", 2, 3, AddressingMode::ZeroPage),
         OpCode::new(0x75, "ADC", 2, 4, AddressingMode::ZeroPage_X),
@@ -205,6 +216,43 @@ lazy_static! {
         OpCode::new(0x8A, "TXA", 1, 2, AddressingMode::None),
         OpCode::new(0x9A, "TXS", 1, 2, AddressingMode::None),
         OpCode::new(0x98, "TYA", 1, 2, AddressingMode::None),
+
+        // UN-OFFICIAL NES OPCODES
+
+        // Unofficial NOPs
+        OpCode::new_undoc(0x1A, "NOP", 1, 2, AddressingMode::None),
+        OpCode::new_undoc(0x3A, "NOP", 1, 2, AddressingMode::None),
+        OpCode::new_undoc(0x5A, "NOP", 1, 2, AddressingMode::None),
+        OpCode::new_undoc(0x7A, "NOP", 1, 2, AddressingMode::None),
+        OpCode::new_undoc(0xDA, "NOP", 1, 2, AddressingMode::None),
+        OpCode::new_undoc(0xFA, "NOP", 1, 2, AddressingMode::None),
+
+        // Unofficial SKB
+        // Reads an immediate byte and skip/discard it
+        OpCode::new_undoc(0x80, "NOP", 2, 2, AddressingMode::Immediate),
+        OpCode::new_undoc(0x82, "NOP", 2, 2, AddressingMode::Immediate),
+        OpCode::new_undoc(0x89, "NOP", 2, 2, AddressingMode::Immediate),
+        OpCode::new_undoc(0xC2, "NOP", 2, 2, AddressingMode::Immediate),
+        OpCode::new_undoc(0xE2, "NOP", 2, 2, AddressingMode::Immediate),
+
+        // Unofficial IGN
+        // Reads a byte from memory and ignores it
+        OpCode::new_undoc(0x0C, "NOP", 3, 4, AddressingMode::Absolute),
+        OpCode::new_undoc(0x1C, "NOP", 3, 4 /* +1 if page crossed */, AddressingMode::Absolute_X),
+        OpCode::new_undoc(0x3C, "NOP", 3, 4 /* +1 if page crossed */, AddressingMode::Absolute_X),
+        OpCode::new_undoc(0x5C, "NOP", 3, 4 /* +1 if page crossed */, AddressingMode::Absolute_X),
+        OpCode::new_undoc(0x7C, "NOP", 3, 4 /* +1 if page crossed */, AddressingMode::Absolute_X),
+        OpCode::new_undoc(0xDC, "NOP", 3, 4 /* +1 if page crossed */, AddressingMode::Absolute_X),
+        OpCode::new_undoc(0xFC, "NOP", 3, 4 /* +1 if page crossed */, AddressingMode::Absolute_X),
+        OpCode::new_undoc(0x04, "NOP", 2, 3, AddressingMode::ZeroPage),
+        OpCode::new_undoc(0x44, "NOP", 2, 3, AddressingMode::ZeroPage),
+        OpCode::new_undoc(0x64, "NOP", 2, 3, AddressingMode::ZeroPage),
+        OpCode::new_undoc(0x14, "NOP", 2, 4, AddressingMode::ZeroPage_X),
+        OpCode::new_undoc(0x34, "NOP", 2, 4, AddressingMode::ZeroPage_X),
+        OpCode::new_undoc(0x54, "NOP", 2, 4, AddressingMode::ZeroPage_X),
+        OpCode::new_undoc(0x74, "NOP", 2, 4, AddressingMode::ZeroPage_X),
+        OpCode::new_undoc(0xD4, "NOP", 2, 4, AddressingMode::ZeroPage_X),
+        OpCode::new_undoc(0xF4, "NOP", 2, 4, AddressingMode::ZeroPage_X),
     ];
 
     pub static ref OPCODES_MAP: HashMap<u8, &'static OpCode> = {
