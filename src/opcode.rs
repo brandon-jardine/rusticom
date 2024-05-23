@@ -354,6 +354,10 @@ lazy_static! {
         // Unofficial AXS
         // Sets X to (A AND X), then subtract from X register (no borrow)
         OpCode::new_undoc(0xCB, "AXS", 2, 2, AddressingMode::Immediate),
+
+        // Unofficial ATX
+        // AND value with acc, then transfer acc to X
+        OpCode::new_undoc(0xAB, "ATX", 2, 2, AddressingMode::Immediate),
     ];
 
     pub static ref OPCODES_MAP: HashMap<u8, &'static OpCode> = {

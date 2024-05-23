@@ -919,6 +919,12 @@ impl CPU {
                     self.register_x = result;
                 },
 
+                // ATX
+                0xAB => {
+                    self.and(&opcode.mode);
+                    self.register_x = self.register_a;
+                },
+
                 0x00 => return, // BRK
                 _ => panic!("OpCode {:#02X} is not recognized", code),
             }
