@@ -862,21 +862,27 @@ impl CPU {
                 0x37 | 0x3B | 0x3F => {
                     self.rol(&opcode.mode);
                     self.and(&opcode.mode);
-                }
+                },
 
                 // SRE
                 0x43 | 0x47 | 0x4F | 0x53 |
                 0x57 | 0x5B | 0x5F => {
                     self.lsr(&opcode.mode);
                     self.eor(&opcode.mode);
-                }
+                },
 
                 // RRA
                 0x63 | 0x67 | 0x6F | 0x73 |
                 0x77 | 0x7B | 0x7F => {
                     self.ror(&opcode.mode);
                     self.adc(&opcode.mode);
-                }
+                },
+
+                // ALR
+                0x4B => {
+                    self.and(&opcode.mode);
+                    self.lsr(&AddressingMode::None);
+                },
 
                 0x00 => return, // BRK
                 _ => panic!("OpCode {:#02X} is not recognized", code),

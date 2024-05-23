@@ -323,7 +323,7 @@ lazy_static! {
         OpCode::new_undoc(0x5B, "SRE", 3, 7, AddressingMode::Absolute_Y),
         OpCode::new_undoc(0x5F, "SRE", 3, 7, AddressingMode::Absolute_X),
 
-        // Unofficial ROR
+        // Unofficial RRA 
         // Equiv. of ROR then ADC
         OpCode::new_undoc(0x63, "RRA", 2, 8, AddressingMode::Indirect_X),
         OpCode::new_undoc(0x67, "RRA", 2, 5, AddressingMode::ZeroPage),
@@ -332,6 +332,9 @@ lazy_static! {
         OpCode::new_undoc(0x77, "RRA", 2, 8, AddressingMode::ZeroPage_X),
         OpCode::new_undoc(0x7B, "RRA", 3, 7, AddressingMode::Absolute_Y),
         OpCode::new_undoc(0x7F, "RRA", 3, 7, AddressingMode::Absolute_X),
+
+        // Unofficial ALR
+        OpCode::new_undoc(0x4B, "ALR", 2, 2, AddressingMode::Immediate),
     ];
 
     pub static ref OPCODES_MAP: HashMap<u8, &'static OpCode> = {
