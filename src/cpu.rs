@@ -890,6 +890,20 @@ impl CPU {
                     self.status.set(StatusFlags::CARRY, self.status.contains(StatusFlags::NEGATIVE));
                 },
 
+                // ARR
+                0x6B => {
+                    self.and(&opcode.mode);
+                    self.ror(&AddressingMode::None);
+
+                    let (five, six) = (
+                        self.register_a & 0b0010_0000 == 0b0010_0000,
+                        self.register_a & 0b0100_0000 == 0b0100_0000,
+                    );
+
+                    self.status.set(StatusFlags::OVERFLOW, five != six);
+                    self.status.set(StatusFlags::CARRY, six);
+                },
+
                 0x00 => return, // BRK
                 _ => panic!("OpCode {:#02X} is not recognized", code),
             }

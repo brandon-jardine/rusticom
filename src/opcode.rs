@@ -341,6 +341,15 @@ lazy_static! {
         // AND immediate, set carry flag if N flag is set
         OpCode::new_undoc(0x0B, "ANC", 2, 2, AddressingMode::Immediate),
         OpCode::new_undoc(0x2B, "ANC", 2, 2, AddressingMode::Immediate),
+
+        // Unofficial ARR
+        // AND, then ROR, then set based on bits 5 and 6 of result:
+        // check bit 5 and 6:
+        // If both bits are 1: set C, clear V.
+        // If both bits are 0: clear C and V.
+        // If only bit 5 is 1: set V, clear C.
+        // If only bit 6 is 1: set C and V.
+        OpCode::new_undoc(0x6B, "ARR", 2, 2, AddressingMode::Immediate),
     ];
 
     pub static ref OPCODES_MAP: HashMap<u8, &'static OpCode> = {
