@@ -925,6 +925,13 @@ impl CPU {
                     self.register_x = self.register_a;
                 },
 
+                // AXA
+                0x9F | 0x93 => {
+                    let addr = self.get_operand_address(&opcode.mode);
+                    let value = self.register_a & self.register_x & (addr >> 8) as u8;
+                    self.mem_write(addr, value);
+                },
+
                 0x00 => return, // BRK
                 _ => panic!("OpCode {:#02X} is not recognized", code),
             }

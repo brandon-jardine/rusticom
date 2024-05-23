@@ -358,6 +358,12 @@ lazy_static! {
         // Unofficial ATX
         // AND value with acc, then transfer acc to X
         OpCode::new_undoc(0xAB, "ATX", 2, 2, AddressingMode::Immediate),
+
+        // Unofficial AXA
+        // AND X with acc then AND with hi byte of target address (conflicting info on this one)
+        // store in memory
+        OpCode::new_undoc(0x9F, "AXA", 3, 5, AddressingMode::Absolute_Y),
+        OpCode::new_undoc(0x93, "AXA", 2, 6, AddressingMode::Indirect_Y),
     ];
 
     pub static ref OPCODES_MAP: HashMap<u8, &'static OpCode> = {
