@@ -379,6 +379,10 @@ lazy_static! {
         OpCode::new_undoc(0xB2, "HLT", 1, 1, AddressingMode::None),
         OpCode::new_undoc(0xD2, "HLT", 1, 1, AddressingMode::None),
         OpCode::new_undoc(0xF2, "HLT", 1, 1, AddressingMode::None),
+
+        // Unofficial LAR
+        // AND memory with SP, transfer result to acc, X, and SP
+        OpCode::new_undoc(0xBB, "LAR", 3, 4, AddressingMode::Absolute_Y),
     ];
 
     pub static ref OPCODES_MAP: HashMap<u8, &'static OpCode> = {

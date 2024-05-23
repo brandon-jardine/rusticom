@@ -940,6 +940,16 @@ impl CPU {
                     panic!("Illegal HLT instruction received.");
                 },
 
+                // LAR
+                0xBB => {
+                    let addr = self.get_operand_address(&opcode.mode);
+                    let data = self.mem_read(addr) & self.stack_pointer;
+                    self.register_a = data;
+                    self.register_x = data;
+                    self.stack_pointer = data;
+                    self.update_zero_and_negative_flags(data);
+                },
+
                 0x00 => return, // BRK
                 _ => panic!("OpCode {:#02X} is not recognized", code),
             }
