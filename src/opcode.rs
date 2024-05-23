@@ -364,6 +364,21 @@ lazy_static! {
         // store in memory
         OpCode::new_undoc(0x9F, "AXA", 3, 5, AddressingMode::Absolute_Y),
         OpCode::new_undoc(0x93, "AXA", 2, 6, AddressingMode::Indirect_Y),
+
+        // Unofficial HLT (KIL/JAM)
+        // Locks up the cpu
+        OpCode::new_undoc(0x02, "HLT", 1, 1, AddressingMode::None),
+        OpCode::new_undoc(0x12, "HLT", 1, 1, AddressingMode::None),
+        OpCode::new_undoc(0x22, "HLT", 1, 1, AddressingMode::None),
+        OpCode::new_undoc(0x32, "HLT", 1, 1, AddressingMode::None),
+        OpCode::new_undoc(0x42, "HLT", 1, 1, AddressingMode::None),
+        OpCode::new_undoc(0x52, "HLT", 1, 1, AddressingMode::None),
+        OpCode::new_undoc(0x62, "HLT", 1, 1, AddressingMode::None),
+        OpCode::new_undoc(0x72, "HLT", 1, 1, AddressingMode::None),
+        OpCode::new_undoc(0x92, "HLT", 1, 1, AddressingMode::None),
+        OpCode::new_undoc(0xB2, "HLT", 1, 1, AddressingMode::None),
+        OpCode::new_undoc(0xD2, "HLT", 1, 1, AddressingMode::None),
+        OpCode::new_undoc(0xF2, "HLT", 1, 1, AddressingMode::None),
     ];
 
     pub static ref OPCODES_MAP: HashMap<u8, &'static OpCode> = {

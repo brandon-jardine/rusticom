@@ -927,9 +927,17 @@ impl CPU {
 
                 // AXA
                 0x9F | 0x93 => {
+                    // Conflicting info on what this one does
                     let addr = self.get_operand_address(&opcode.mode);
                     let value = self.register_a & self.register_x & (addr >> 8) as u8;
                     self.mem_write(addr, value);
+                },
+
+                // HLT
+                0x02 | 0x12 | 0x22 | 0x32 | 0x42 |
+                0x52 | 0x62 | 0x72 | 0x92 | 0xB2 |
+                0xD2 | 0xF2 => {
+                    panic!("Illegal HLT instruction received.");
                 },
 
                 0x00 => return, // BRK
