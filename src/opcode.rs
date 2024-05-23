@@ -350,6 +350,10 @@ lazy_static! {
         // If only bit 5 is 1: set V, clear C.
         // If only bit 6 is 1: set C and V.
         OpCode::new_undoc(0x6B, "ARR", 2, 2, AddressingMode::Immediate),
+
+        // Unofficial AXS
+        // Sets X to (A AND X), then subtract from X register (no borrow)
+        OpCode::new_undoc(0xCB, "AXS", 2, 2, AddressingMode::Immediate),
     ];
 
     pub static ref OPCODES_MAP: HashMap<u8, &'static OpCode> = {

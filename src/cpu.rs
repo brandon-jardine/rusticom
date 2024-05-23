@@ -904,6 +904,21 @@ impl CPU {
                     self.status.set(StatusFlags::CARRY, six);
                 },
 
+                // AXS
+                0xCB => {
+                    let data = self.mem_read(self.get_operand_address(&opcode.mode));
+                    let bitwise_and = self.register_a & self.register_x;
+
+                    if data <= bitwise_and {
+                        self.status.insert(StatusFlags::CARRY);
+                    }
+                    
+                    let result = bitwise_and.wrapping_sub(data);
+                    self.update_zero_and_negative_flags(result);
+
+                    self.register_x = result;
+                },
+
                 0x00 => return, // BRK
                 _ => panic!("OpCode {:#02X} is not recognized", code),
             }
