@@ -334,7 +334,13 @@ lazy_static! {
         OpCode::new_undoc(0x7F, "RRA", 3, 7, AddressingMode::Absolute_X),
 
         // Unofficial ALR
+        // AND immediate, then LSR accumulator
         OpCode::new_undoc(0x4B, "ALR", 2, 2, AddressingMode::Immediate),
+
+        // Unofficial ANC
+        // AND immediate, set carry flag if N flag is set
+        OpCode::new_undoc(0x0B, "ANC", 2, 2, AddressingMode::Immediate),
+        OpCode::new_undoc(0x2B, "ANC", 2, 2, AddressingMode::Immediate),
     ];
 
     pub static ref OPCODES_MAP: HashMap<u8, &'static OpCode> = {

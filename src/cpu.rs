@@ -884,6 +884,12 @@ impl CPU {
                     self.lsr(&AddressingMode::None);
                 },
 
+                // ANC
+                0x0B | 0x2B => {
+                    self.and(&opcode.mode);
+                    self.status.set(StatusFlags::CARRY, self.status.contains(StatusFlags::NEGATIVE));
+                },
+
                 0x00 => return, // BRK
                 _ => panic!("OpCode {:#02X} is not recognized", code),
             }
