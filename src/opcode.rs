@@ -399,6 +399,9 @@ lazy_static! {
         OpCode::new_undoc(0x9B, "XAS", 3, 5, AddressingMode::Absolute_Y),
 
         // XAA
+        // This instruction is unreliable and based on the analog state
+        // of the CPU. Supposedly copys X to A then ANDs A with immediate value.
+        OpCode::new_undoc(0x8B, "XAA", 2, 2, AddressingMode::Immediate),
     ];
 
     pub static ref OPCODES_MAP: HashMap<u8, &'static OpCode> = {

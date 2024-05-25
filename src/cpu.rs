@@ -972,6 +972,12 @@ impl CPU {
                     self.update_zero_and_negative_flags(data);
                 },
 
+                // XAA
+                0x8B => {
+                    self.register_a = self.register_x;
+                    self.register_a &= self.mem_read(self.get_operand_address(&opcode.mode));
+                },
+
                 0x00 => return, // BRK
                 _ => panic!("OpCode {:#02X} is not recognized", code),
             }
