@@ -390,8 +390,15 @@ lazy_static! {
         OpCode::new_undoc(0x9E, "SXA", 3, 5, AddressingMode::Absolute_Y),
 
         // SYA
-        // xAA
+        // Same as SXA, but Y register
+        OpCode::new_undoc(0x9C, "SYA", 3, 5, AddressingMode::Absolute_X),
+
         // XAS
+        // AND X with acc, store result in stack pointer, then AND
+        // SP with hi byte of target address, + 1, store in memory
+        OpCode::new_undoc(0x9B, "XAS", 3, 5, AddressingMode::Absolute_Y),
+
+        // XAA
     ];
 
     pub static ref OPCODES_MAP: HashMap<u8, &'static OpCode> = {

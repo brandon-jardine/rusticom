@@ -938,14 +938,22 @@ impl CPU {
                     let addr = self.get_operand_address(&opcode.mode);
                     let value = self.register_x & (addr >> 8) as u8 + 1;
                     self.mem_write(addr, value);
-                }
+                },
 
                 // SYA
                 0x9C => {
                     let addr = self.get_operand_address(&opcode.mode);
                     let value = self.register_y & (addr >> 8) as u8 + 1;
                     self.mem_write(addr, value);
-                }
+                },
+
+                // XAS
+                0x9B => {
+                    let addr = self.get_operand_address(&opcode.mode);
+                    self.stack_pointer = self.register_a & self.register_x;
+                    let value = self.stack_pointer & (addr >> 8) as u8 + 1;
+                    self.mem_write(addr, value);
+                },
 
                 // HLT
                 0x02 | 0x12 | 0x22 | 0x32 | 0x42 |
