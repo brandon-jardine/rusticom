@@ -979,7 +979,6 @@ impl CPU {
                 },
 
                 0x00 => return, // BRK
-                _ => panic!("OpCode {:#02X} is not recognized", code),
             }
 
             if program_counter_state == self.program_counter {
