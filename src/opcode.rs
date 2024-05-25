@@ -383,6 +383,15 @@ lazy_static! {
         // Unofficial LAR
         // AND memory with SP, transfer result to acc, X, and SP
         OpCode::new_undoc(0xBB, "LAR", 3, 4, AddressingMode::Absolute_Y),
+
+        // SXA
+        // Similar to AXA, AND X with hi byte of target address + 1
+        // store in memory
+        OpCode::new_undoc(0x9E, "SXA", 3, 5, AddressingMode::Absolute_Y),
+
+        // SYA
+        // xAA
+        // XAS
     ];
 
     pub static ref OPCODES_MAP: HashMap<u8, &'static OpCode> = {

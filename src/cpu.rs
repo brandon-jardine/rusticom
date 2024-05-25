@@ -933,6 +933,20 @@ impl CPU {
                     self.mem_write(addr, value);
                 },
 
+                // SXA
+                0x9E => {
+                    let addr = self.get_operand_address(&opcode.mode);
+                    let value = self.register_x & (addr >> 8) as u8 + 1;
+                    self.mem_write(addr, value);
+                }
+
+                // SYA
+                0x9C => {
+                    let addr = self.get_operand_address(&opcode.mode);
+                    let value = self.register_y & (addr >> 8) as u8 + 1;
+                    self.mem_write(addr, value);
+                }
+
                 // HLT
                 0x02 | 0x12 | 0x22 | 0x32 | 0x42 |
                 0x52 | 0x62 | 0x72 | 0x92 | 0xB2 |
