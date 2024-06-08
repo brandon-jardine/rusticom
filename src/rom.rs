@@ -1,7 +1,7 @@
 #[cfg(test)]
 pub mod tests;
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Mirroring {
     Vertical,
     Horizontal,

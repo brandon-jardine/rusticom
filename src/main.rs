@@ -2,6 +2,7 @@ pub mod bus;
 pub mod cpu;
 pub mod mem;
 pub mod opcode;
+pub mod ppu;
 pub mod rom;
 pub mod trace;
 
