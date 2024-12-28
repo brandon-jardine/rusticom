@@ -1,9 +1,13 @@
 use crate::rom::Mirroring;
 use self::addrreg::AddressRegister;
-use self::ctrlreg::ControlRegister;
+use self::ctrlreg::{ControlFlags, ControlRegister};
+use self::maskreg::{MaskFlags, MaskRegister};
+use self::statusreg::StatusRegister;
 
 pub mod addrreg;
 pub mod ctrlreg;
+pub mod maskreg;
+pub mod statusreg;
 
 pub struct PPU {
     pub chr_rom: Vec<u8>,
@@ -13,6 +17,10 @@ pub struct PPU {
     pub mirroring: Mirroring,
     pub addr: AddressRegister,
     pub ctrl: ControlRegister,
+    pub mask: MaskRegister,
+    pub status: StatusRegister,
+    cycles: usize,
+    scanline: u16,
     internal_data_buf: u8,
 }
 
@@ -24,9 +32,13 @@ impl PPU {
             vram: [0; 2048],
             oam_data: [0; 256],
             palette_table: [0; 32],
+            cycles: 0,
+            scanline: 0,
             internal_data_buf: 0,
             addr: AddressRegister::new(),
             ctrl: ControlRegister::new(),
+            mask: MaskRegister::new(),
+            status: StatusRegister::new(),
         }
     }
 
@@ -35,14 +47,18 @@ impl PPU {
     }
 
     pub fn write_to_ppu_ctrl(&mut self, value: u8) {
-        self.ctrl = ControlRegister::from_bits_truncate(value);
+        self.ctrl.flags = ControlFlags::from_bits_truncate(value);
+    }
+
+    pub fn write_to_ppu_mask(&mut self, value: u8) {
+        self.mask.flags = MaskFlags::from_bits_truncate(value);
     }
 
     fn inc_vram_addr(&mut self) {
         self.addr.increment(self.ctrl.vram_addr_inc());
     }
 
-    fn read_data(&mut self) -> u8 {
+    pub fn read_data(&mut self) -> u8 {
         let addr = self.addr.get_addr();
         self.inc_vram_addr();
 
@@ -91,6 +107,28 @@ impl PPU {
             (Mirroring::Horizontal, 3) => vram_index - 0x0800,
             _ => vram_index,
         }
+    }
+
+    pub fn tick(&mut self, cycles: u8) -> bool {
+        self.cycles += cycles as usize;
+        if self.cycles >= 341 {
+            self.cycles -= 341;
+            self.scanline += 1;
+
+            if self.scanline == 241 {
+                if self.ctrl.flags.contains(ControlFlags::GENERATE_NMI) {
+                    self.status.set_vblank_status(true);
+                    todo!("trigger NMI interrupt")
+                }
+            }
+
+            if self.scanline >= 262 {
+                self.scanline = 0;
+                self.status.reset_vblank_status();
+                return true;
+            }
+        }
+        return false;
     }
 }
 

@@ -16,13 +16,14 @@ const ROM_MASK: u16 = 0b0111_1111_1111_1111;
 
 pub struct Bus {
     cpu_vram: [u8; 2048],
+    cycles: usize,
     prg_rom: Vec<u8>,
     ppu: PPU,
     pub allow_rom_writes: bool,
 }
 
 impl Mem for Bus {
-    fn mem_read(&self, addr: u16) -> u8 {
+    fn mem_read(&mut self, addr: u16) -> u8 {
         match addr {
             RAM_START ..= RAM_END => {
                 let mask_apply = addr & RAM_MASK;
@@ -32,6 +33,9 @@ impl Mem for Bus {
             0x2000 | 0x2001 | 0x2003 | 0x2005 | 0x2006 | 0x4014 => {
                 panic!("Attempt to read from write-only PPU address {:x}", addr);
             },
+
+            0x2002 => self.ppu.status.bits(),
+            0x2007 => self.ppu.read_data(),
 
             0x2008 ..= PPU_END => {
                 let mask_apply = addr & PPU_MASK;
@@ -63,6 +67,7 @@ impl Mem for Bus {
             },
 
             0x2000 => self.ppu.write_to_ppu_ctrl(data),
+            0x2001 => self.ppu.write_to_ppu_mask(data),
             0x2006 => self.ppu.write_to_ppu_addr(data),
             0x2007 => self.ppu.write_data(data),
 
@@ -93,10 +98,20 @@ impl Bus {
 
         Bus {
             cpu_vram: [0; 2048],
+            cycles: 0,
             prg_rom: rom.prg_rom,
             ppu,
             allow_rom_writes: false,
         }
+    }
+
+    pub fn poll_nmi_status() -> bool {
+        todo!("Get nmi status from ppu");
+    }
+
+    pub fn tick(&mut self, cycles: u8) {
+        self.cycles += cycles as usize;
+        self.ppu.tick(cycles * 3);
     }
 }
 

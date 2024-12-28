@@ -1,3 +1,5 @@
+const ADDR_MIRROR_MASK: u16 = 0b0011_1111_1111_1111;
+
 pub struct AddressRegister {
     hi_value: u8,
     lo_value: u8,
@@ -14,8 +16,12 @@ impl AddressRegister {
     }
 
     fn set(&mut self, addr: u16) {
-        self.hi_value = (addr >> 8) as u8;
+    self.hi_value = (addr >> 8) as u8;
         self.lo_value = (addr & 0xFF) as u8;
+    }
+
+    pub fn value(&self) -> (u8, u8) {
+        (self.hi_value, self.lo_value)
     }
 
     pub fn update(&mut self, addr_part: u8) {
@@ -26,7 +32,7 @@ impl AddressRegister {
         }
 
         if self.get_addr() > 0x3FFF {
-            self.set(self.get_addr() & 0b0011_1111_1111_1111);
+            self.set(self.get_addr() & ADDR_MIRROR_MASK);
         }
 
         self.hi_ptr = !self.hi_ptr;
@@ -41,7 +47,7 @@ impl AddressRegister {
         }
 
         if self.get_addr() > 0x3FFF {
-            self.set(self.get_addr() & 0b0011_1111_1111_1111);
+            self.set(self.get_addr() & ADDR_MIRROR_MASK);
         }
     }
 

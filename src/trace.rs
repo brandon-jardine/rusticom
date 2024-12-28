@@ -7,7 +7,7 @@ use crate::opcode;
 #[cfg(test)]
 mod tests;
 
-pub fn trace(cpu: &CPU) -> String {
+pub fn trace(cpu: &mut CPU) -> String {
     let ref opcodes: HashMap<u8, &'static opcode::OpCode> = *opcode::OPCODES_MAP;
     
     let instr_byte_one: u8 = cpu.mem_read(cpu.program_counter);

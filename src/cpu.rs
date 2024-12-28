@@ -56,7 +56,7 @@ pub enum AddressingMode {
 }
 
 impl Mem for CPU {
-    fn mem_read(&self, addr: u16) -> u8 {
+    fn mem_read(&mut self, addr: u16) -> u8 {
         self.bus.mem_read(addr)
     }
 
@@ -64,7 +64,7 @@ impl Mem for CPU {
         self.bus.mem_write(addr, data)
     }
 
-    fn mem_read_u16(&self, pos: u16) -> u16 {
+    fn mem_read_u16(&mut self, pos: u16) -> u16 {
         self.bus.mem_read_u16(pos)
     }
 
@@ -119,7 +119,7 @@ impl CPU {
         self.program_counter = self.mem_read_u16(0xFFFC);
     }
 
-    pub fn resolve_address(&self, mode: &AddressingMode, base: u16) -> u16 {
+    pub fn resolve_address(&mut self, mode: &AddressingMode, base: u16) -> u16 {
         match mode {
             AddressingMode::ZeroPage => self.mem_read(base) as u16,
             AddressingMode::Absolute => self.mem_read_u16(base),
@@ -181,7 +181,7 @@ impl CPU {
         }
     }
 
-    fn get_operand_address(&self, mode: &AddressingMode) -> u16 {
+    fn get_operand_address(&mut self, mode: &AddressingMode) -> u16 {
         match mode {
             AddressingMode::Immediate => self.program_counter,
             _ => self.resolve_address(mode, self.program_counter),
@@ -304,7 +304,8 @@ impl CPU {
                 let value = self.mem_read(addr);
                 let carry = 0b1000_0000 & value == 0b1000_0000;
                 self.mem_write(addr, value << 1);
-                self.update_zero_and_negative_flags(self.mem_read(addr));
+                let mem_read = self.mem_read(addr);
+                self.update_zero_and_negative_flags(mem_read);
                 self.status.set(StatusFlags::CARRY, carry);
             },
         }
@@ -324,7 +325,8 @@ impl CPU {
                 let value = self.mem_read(addr);
                 let carry = 1 & value == 1;
                 self.mem_write(addr, value >> 1);
-                self.update_zero_and_negative_flags(self.mem_read(addr));
+                let mem_read = self.mem_read(addr);
+                self.update_zero_and_negative_flags(mem_read);
                 self.status.set(StatusFlags::CARRY, carry);
             },
         }
@@ -830,7 +832,8 @@ impl CPU {
                 0x83 | 0x87 | 0x8F | 0x97 => {
                     // SAX
                     let value = self.register_a & self.register_x;
-                    self.mem_write(self.get_operand_address(&opcode.mode), value);
+                    let addr = self.get_operand_address(&opcode.mode);
+                    self.mem_write(addr, value);
                 },
 
                 // Duplicated SBC 
@@ -906,7 +909,8 @@ impl CPU {
 
                 // AXS
                 0xCB => {
-                    let data = self.mem_read(self.get_operand_address(&opcode.mode));
+                    let addr = self.get_operand_address(&opcode.mode);
+                    let data = self.mem_read(addr);
                     let bitwise_and = self.register_a & self.register_x;
 
                     if data <= bitwise_and {
@@ -974,12 +978,16 @@ impl CPU {
 
                 // XAA
                 0x8B => {
+                    let addr = self.get_operand_address(&opcode.mode);
                     self.register_a = self.register_x;
-                    self.register_a &= self.mem_read(self.get_operand_address(&opcode.mode));
+                    self.register_a &= self.mem_read(addr);
                 },
 
                 0x00 => return, // BRK
             }
+
+            self.bus.tick(opcode.cycles);
+            todo!("calculate variable cycle opcodes");
 
             if program_counter_state == self.program_counter {
                 self.program_counter += (opcode.len - 1) as u16;

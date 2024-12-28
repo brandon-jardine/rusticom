@@ -2,7 +2,7 @@ use bitflags::bitflags;
 
 bitflags! {
     #[derive(Clone)]
-    pub struct ControlRegister: u8 {
+    pub struct ControlFlags : u8 {
         const NAMETABLE1        = 0b0000_0001;
         const NAMETABLE2        = 0b0000_0010;
         const VRAM_ADDR_INC     = 0b0000_0100;
@@ -14,13 +14,19 @@ bitflags! {
     }
 }
 
+pub struct ControlRegister {
+    pub flags: ControlFlags,
+}
+
 impl ControlRegister {
     pub fn new() -> Self {
-        ControlRegister::from_bits_truncate(0)
+        ControlRegister {
+            flags: ControlFlags::from_bits_truncate(0),
+        }
     }
 
     pub fn vram_addr_inc(&self) -> u8 {
-        if self.contains(ControlRegister::VRAM_ADDR_INC) {
+        if self.flags.contains(ControlFlags::VRAM_ADDR_INC) {
             32
         } else {
             1
