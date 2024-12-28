@@ -1,3 +1,5 @@
+use scrollreg::ScrollRegister;
+
 use crate::rom::Mirroring;
 use self::addrreg::AddressRegister;
 use self::ctrlreg::{ControlFlags, ControlRegister};
@@ -8,6 +10,7 @@ pub mod addrreg;
 pub mod ctrlreg;
 pub mod maskreg;
 pub mod statusreg;
+pub mod scrollreg;
 
 pub struct PPU {
     pub chr_rom: Vec<u8>,
@@ -19,9 +22,12 @@ pub struct PPU {
     pub ctrl: ControlRegister,
     pub mask: MaskRegister,
     pub status: StatusRegister,
+    pub scroll: ScrollRegister,
+    pub oam_addr: u8,
     cycles: usize,
     scanline: u16,
     internal_data_buf: u8,
+    w: bool,
 }
 
 impl PPU {
@@ -31,6 +37,7 @@ impl PPU {
             mirroring,
             vram: [0; 2048],
             oam_data: [0; 256],
+            oam_addr: 0,
             palette_table: [0; 32],
             cycles: 0,
             scanline: 0,
@@ -39,11 +46,19 @@ impl PPU {
             ctrl: ControlRegister::new(),
             mask: MaskRegister::new(),
             status: StatusRegister::new(),
+            scroll: ScrollRegister::new(),
+            w: false,
         }
     }
 
+    pub fn write_to_ppu_scroll(&mut self, value: u8) {
+        self.scroll.update(value, self.w);
+        self.w = !self.w;
+    }
+
     pub fn write_to_ppu_addr(&mut self, value: u8) {
-        self.addr.update(value);
+        self.addr.update(value, self.w);
+        self.w = !self.w;
     }
 
     pub fn write_to_ppu_ctrl(&mut self, value: u8) {
@@ -93,6 +108,19 @@ impl PPU {
         }
 
         self.inc_vram_addr();
+    }
+
+    pub fn read_oam_data(&self) -> u8 {
+        todo!("check if we're in vertical or forced vblank interval");
+
+        self.oam_data[self.oam_addr as usize]
+    }
+
+    pub fn write_oam_data(&mut self, value: u8) {
+        todo!("implement caveats from https://www.nesdev.org/wiki/PPU_registers#OAMDATA_-_Sprite_RAM_data_($2004_read/write");
+
+        self.oam_data[self.oam_addr as usize] = value;
+        self.oam_addr += 1;
     }
 
     fn mirror_vram_addr(&self, addr: u16) -> u16 {

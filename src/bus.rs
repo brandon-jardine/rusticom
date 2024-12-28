@@ -35,6 +35,9 @@ impl Mem for Bus {
             },
 
             0x2002 => self.ppu.status.bits(),
+
+            0x2004 => self.ppu.read_oam_data(),
+
             0x2007 => self.ppu.read_data(),
 
             0x2008 ..= PPU_END => {
@@ -68,6 +71,10 @@ impl Mem for Bus {
 
             0x2000 => self.ppu.write_to_ppu_ctrl(data),
             0x2001 => self.ppu.write_to_ppu_mask(data),
+
+            0x2003 => self.ppu.oam_addr = data,
+
+            0x2005 => self.ppu.write_to_ppu_scroll(data),
             0x2006 => self.ppu.write_to_ppu_addr(data),
             0x2007 => self.ppu.write_data(data),
 
