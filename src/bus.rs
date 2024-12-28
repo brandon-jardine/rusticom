@@ -34,7 +34,7 @@ impl Mem for Bus {
                 panic!("Attempt to read from write-only PPU address {:x}", addr);
             },
 
-            0x2002 => self.ppu.status.bits(),
+            0x2002 => self.ppu.read_status(),
 
             0x2004 => self.ppu.read_oam_data(),
 

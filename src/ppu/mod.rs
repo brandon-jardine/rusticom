@@ -110,6 +110,11 @@ impl PPU {
         self.inc_vram_addr();
     }
 
+    pub fn read_status(&mut self) -> u8 {
+        self.w = false;
+        self.status.bits()
+    }
+
     pub fn read_oam_data(&self) -> u8 {
         todo!("check if we're in vertical or forced vblank interval");
 
