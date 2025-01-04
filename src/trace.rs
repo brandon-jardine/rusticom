@@ -27,7 +27,7 @@ pub fn trace(cpu: &mut CPU) -> String {
     let (mem_addr, stored_value) = match opcode.mode {
         AddressingMode::Immediate | AddressingMode::None => (0, 0),
         _ => {
-            let addr = cpu.resolve_address(&opcode.mode, cpu.program_counter + 1);
+            let (addr, _) = cpu.resolve_address(&opcode.mode, cpu.program_counter + 1);
             (addr, cpu.mem_read(addr))
         }
     };

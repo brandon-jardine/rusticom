@@ -83,6 +83,17 @@ impl Mem for Bus {
                 self.mem_write(mask_apply, data);
             },
 
+            0x4014 => {
+                let oam_page: u16 = (data as u16) << 8;
+                let idx = oam_page as usize;
+
+                let oam_slice = &self.cpu_vram[idx..(idx+256)];
+                self.ppu.oam_data.copy_from_slice(oam_slice);
+
+                //self.tick(513);
+                todo!("should take 513 or 514 cycles");
+            }
+
             ROM_START ..= ROM_END => {
                 if self.allow_rom_writes {
                     let mask_apply = addr & ROM_MASK;

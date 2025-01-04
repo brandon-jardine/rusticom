@@ -1,28 +1,42 @@
 use crate::cpu::AddressingMode;
 use std::collections::HashMap;
 
+pub enum CycleBehavior {
+    Constant(u8),
+    PageCross(u8),  // +1 if page crossed
+    Branch(u8),     // +1 if branch succeeds, +2 if page crossed
+}
+
+impl From<u8> for CycleBehavior {
+    fn from(i: u8) -> Self {
+        CycleBehavior::Constant(i)
+    }
+}
+
+type Cycles = CycleBehavior;
+
 pub struct OpCode {
     pub code: u8,
     pub mnemonic: &'static str,
     pub len: u8,
-    pub cycles: u8,
+    pub cycles: CycleBehavior,
     pub mode: AddressingMode,
     pub undocumented: bool,
 }
 
 impl OpCode {
-    pub fn new(code: u8, mnemonic: &'static str, len: u8, cycles: u8, mode: AddressingMode) -> Self {
+    pub fn new<T: Into<Cycles>>(code: u8, mnemonic: &'static str, len: u8, cycles: T, mode: AddressingMode) -> Self {
         OpCode {
             code,
             mnemonic,
             len,
-            cycles,
+            cycles: cycles.into(),
             mode,
             undocumented: false,
         }
     }
 
-    pub fn new_undoc(code: u8, mnemonic: &'static str, len: u8, cycles: u8, mode: AddressingMode) -> Self {
+    pub fn new_undoc<T: Into<Cycles>>(code: u8, mnemonic: &'static str, len: u8, cycles: T, mode: AddressingMode) -> Self {
         OpCode {
             undocumented: true,
             ..OpCode::new(code, mnemonic, len, cycles, mode)
@@ -38,19 +52,19 @@ lazy_static! {
         OpCode::new(0x65, "ADC", 2, 3, AddressingMode::ZeroPage),
         OpCode::new(0x75, "ADC", 2, 4, AddressingMode::ZeroPage_X),
         OpCode::new(0x6D, "ADC", 3, 4, AddressingMode::Absolute),
-        OpCode::new(0x7D, "ADC", 3, 4 /* +1 if page crossed */, AddressingMode::Absolute_X),
-        OpCode::new(0x79, "ADC", 3, 4 /* +1 if page crossed */, AddressingMode::Absolute_Y),
+        OpCode::new(0x7D, "ADC", 3, Cycles::PageCross(4), AddressingMode::Absolute_X),
+        OpCode::new(0x79, "ADC", 3, Cycles::PageCross(4), AddressingMode::Absolute_Y),
         OpCode::new(0x61, "ADC", 2, 6, AddressingMode::Indirect_X),
-        OpCode::new(0x71, "ADC", 2, 5 /* +1 if page crossed */, AddressingMode::Indirect_Y),
+        OpCode::new(0x71, "ADC", 2, Cycles::PageCross(5), AddressingMode::Indirect_Y),
 
         OpCode::new(0x29, "AND", 2, 2, AddressingMode::Immediate),
         OpCode::new(0x25, "AND", 2, 3, AddressingMode::ZeroPage),
         OpCode::new(0x35, "AND", 2, 4, AddressingMode::ZeroPage_X),
         OpCode::new(0x2D, "AND", 3, 4, AddressingMode::Absolute),
-        OpCode::new(0x3D, "AND", 3, 4 /* +1 if page crossed */, AddressingMode::Absolute_X),
-        OpCode::new(0x39, "AND", 3, 4 /* +1 if page crossed */, AddressingMode::Absolute_Y),
+        OpCode::new(0x3D, "AND", 3, Cycles::PageCross(4), AddressingMode::Absolute_X),
+        OpCode::new(0x39, "AND", 3, Cycles::PageCross(4), AddressingMode::Absolute_Y),
         OpCode::new(0x21, "AND", 2, 6, AddressingMode::Indirect_X),
-        OpCode::new(0x31, "AND", 2, 5 /* +1 if page crossed */, AddressingMode::Indirect_Y),
+        OpCode::new(0x31, "AND", 2, Cycles::PageCross(5), AddressingMode::Indirect_Y),
 
         OpCode::new(0x0A, "ASL", 1, 2, AddressingMode::None),
         OpCode::new(0x06, "ASL", 2, 5, AddressingMode::ZeroPage),
@@ -58,14 +72,14 @@ lazy_static! {
         OpCode::new(0x0E, "ASL", 3, 6, AddressingMode::Absolute),
         OpCode::new(0x1E, "ASL", 3, 7, AddressingMode::Absolute_X),
 
-        OpCode::new(0x90, "BCC", 2, 2 /* +1 if branch succeeds, +2 if to a new page */, AddressingMode::None),
-        OpCode::new(0xB0, "BCS", 2, 2 /* +1 if branch succeeds, +2 if to a new page */, AddressingMode::None),
-        OpCode::new(0xF0, "BEQ", 2, 2 /* +1 if branch succeeds, +2 if to a new page */, AddressingMode::None),
-        OpCode::new(0x30, "BMI", 2, 2 /* +1 if branch succeeds, +2 if to a new page */, AddressingMode::None),
-        OpCode::new(0xD0, "BNE", 2, 2 /* +1 if branch succeeds, +2 if to a new page */, AddressingMode::None),
-        OpCode::new(0x10, "BPL", 2, 2 /* +1 if branch succeeds, +2 if to a new page */, AddressingMode::None),
-        OpCode::new(0x50, "BVC", 2, 2 /* +1 if branch succeeds, +2 if to a new page */, AddressingMode::None),
-        OpCode::new(0x70, "BVS", 2, 2 /* +1 if branch succeeds, +2 if to a new page */, AddressingMode::None),
+        OpCode::new(0x90, "BCC", 2, Cycles::Branch(2), AddressingMode::None),
+        OpCode::new(0xB0, "BCS", 2, Cycles::Branch(2), AddressingMode::None),
+        OpCode::new(0xF0, "BEQ", 2, Cycles::Branch(2), AddressingMode::None),
+        OpCode::new(0x30, "BMI", 2, Cycles::Branch(2), AddressingMode::None),
+        OpCode::new(0xD0, "BNE", 2, Cycles::Branch(2), AddressingMode::None),
+        OpCode::new(0x10, "BPL", 2, Cycles::Branch(2), AddressingMode::None),
+        OpCode::new(0x50, "BVC", 2, Cycles::Branch(2), AddressingMode::None),
+        OpCode::new(0x70, "BVS", 2, Cycles::Branch(2), AddressingMode::None),
 
         OpCode::new(0x24, "BIT", 2, 3, AddressingMode::ZeroPage),
         OpCode::new(0x2C, "BIT", 3, 4, AddressingMode::Absolute),
@@ -81,10 +95,10 @@ lazy_static! {
         OpCode::new(0xC5, "CMP", 2, 3, AddressingMode::ZeroPage),
         OpCode::new(0xD5, "CMP", 2, 4, AddressingMode::ZeroPage_X),
         OpCode::new(0xCD, "CMP", 3, 4, AddressingMode::Absolute),
-        OpCode::new(0xDD, "CMP", 3, 4 /* +1 if page crossed */, AddressingMode::Absolute_X),
-        OpCode::new(0xD9, "CMP", 3, 4 /* +1 if page crossed */, AddressingMode::Absolute_Y),
+        OpCode::new(0xDD, "CMP", 3, Cycles::PageCross(4), AddressingMode::Absolute_X),
+        OpCode::new(0xD9, "CMP", 3, Cycles::PageCross(4), AddressingMode::Absolute_Y),
         OpCode::new(0xC1, "CMP", 2, 6, AddressingMode::Indirect_X),
-        OpCode::new(0xD1, "CMP", 2, 5 /* +1 if page crossed */, AddressingMode::Indirect_Y),
+        OpCode::new(0xD1, "CMP", 2, Cycles::PageCross(5), AddressingMode::Indirect_Y),
 
         OpCode::new(0xE0, "CPX", 2, 2, AddressingMode::Immediate),
         OpCode::new(0xE4, "CPX", 2, 3, AddressingMode::ZeroPage),
@@ -106,10 +120,10 @@ lazy_static! {
         OpCode::new(0x45, "EOR", 2, 3, AddressingMode::ZeroPage),
         OpCode::new(0x55, "EOR", 2, 4, AddressingMode::ZeroPage_X),
         OpCode::new(0x4D, "EOR", 3, 4, AddressingMode::Absolute),
-        OpCode::new(0x5D, "EOR", 3, 4 /* +1 if page crossed */, AddressingMode::Absolute_X),
-        OpCode::new(0x59, "EOR", 3, 4 /* +1 if page crossed */, AddressingMode::Absolute_Y),
+        OpCode::new(0x5D, "EOR", 3, Cycles::PageCross(4), AddressingMode::Absolute_X),
+        OpCode::new(0x59, "EOR", 3, Cycles::PageCross(4), AddressingMode::Absolute_Y),
         OpCode::new(0x41, "EOR", 2, 6, AddressingMode::Indirect_X),
-        OpCode::new(0x51, "EOR", 2, 5 /* +1 if page crossed */, AddressingMode::Indirect_Y),
+        OpCode::new(0x51, "EOR", 2, Cycles::PageCross(5), AddressingMode::Indirect_Y),
 
         OpCode::new(0x4C, "JMP", 3, 3, AddressingMode::None),
         OpCode::new(0x6C, "JMP", 3, 5, AddressingMode::None),
@@ -130,22 +144,22 @@ lazy_static! {
         OpCode::new(0xA5, "LDA", 2, 3, AddressingMode::ZeroPage),
         OpCode::new(0xB5, "LDA", 2, 4, AddressingMode::ZeroPage_X),
         OpCode::new(0xAD, "LDA", 3, 4, AddressingMode::Absolute),
-        OpCode::new(0xBD, "LDA", 3, 4 /* +1 if page crossed */, AddressingMode::Absolute_X),
-        OpCode::new(0xB9, "LDA", 3, 4 /* +1 if page crossed */, AddressingMode::Absolute_Y),
+        OpCode::new(0xBD, "LDA", 3, Cycles::PageCross(4), AddressingMode::Absolute_X),
+        OpCode::new(0xB9, "LDA", 3, Cycles::PageCross(4), AddressingMode::Absolute_Y),
         OpCode::new(0xA1, "LDA", 2, 6, AddressingMode::Indirect_X),
-        OpCode::new(0xB1, "LDA", 2, 5 /* +1 if page crossed */, AddressingMode::Indirect_Y),
+        OpCode::new(0xB1, "LDA", 2, Cycles::PageCross(5), AddressingMode::Indirect_Y),
 
         OpCode::new(0xA2, "LDX", 2, 2, AddressingMode::Immediate),
         OpCode::new(0xA6, "LDX", 2, 3, AddressingMode::ZeroPage),
         OpCode::new(0xB6, "LDX", 2, 4, AddressingMode::ZeroPage_Y),
         OpCode::new(0xAE, "LDX", 3, 4, AddressingMode::Absolute),
-        OpCode::new(0xBE, "LDX", 3, 4 /* +1 if page crossed */, AddressingMode::Absolute_Y),
+        OpCode::new(0xBE, "LDX", 3, Cycles::PageCross(4), AddressingMode::Absolute_Y),
 
         OpCode::new(0xA0, "LDY", 2, 2, AddressingMode::Immediate),
         OpCode::new(0xA4, "LDY", 2, 3, AddressingMode::ZeroPage),
         OpCode::new(0xB4, "LDY", 2, 4, AddressingMode::ZeroPage_X),
         OpCode::new(0xAC, "LDY", 3, 4, AddressingMode::Absolute),
-        OpCode::new(0xBC, "LDY", 3, 4 /* +1 if page crossed */, AddressingMode::Absolute_X),
+        OpCode::new(0xBC, "LDY", 3, Cycles::PageCross(4), AddressingMode::Absolute_X),
 
         OpCode::new(0x4A, "LSR", 1, 2, AddressingMode::None),
         OpCode::new(0x46, "LSR", 2, 5, AddressingMode::ZeroPage),
@@ -159,10 +173,10 @@ lazy_static! {
         OpCode::new(0x05, "ORA", 2, 3, AddressingMode::ZeroPage),
         OpCode::new(0x15, "ORA", 2, 4, AddressingMode::ZeroPage_X),
         OpCode::new(0x0D, "ORA", 3, 4, AddressingMode::Absolute),
-        OpCode::new(0x1D, "ORA", 3, 4 /* +1 if page crossed */, AddressingMode::Absolute_X),
-        OpCode::new(0x19, "ORA", 3, 4 /* +1 if page crossed */, AddressingMode::Absolute_Y),
+        OpCode::new(0x1D, "ORA", 3, Cycles::PageCross(4), AddressingMode::Absolute_X),
+        OpCode::new(0x19, "ORA", 3, Cycles::PageCross(4), AddressingMode::Absolute_Y),
         OpCode::new(0x01, "ORA", 2, 6, AddressingMode::Indirect_X),
-        OpCode::new(0x11, "ORA", 2, 5 /* +1 if page crossed */, AddressingMode::Indirect_Y),
+        OpCode::new(0x11, "ORA", 2, Cycles::PageCross(5), AddressingMode::Indirect_Y),
 
         OpCode::new(0x48, "PHA", 1, 3, AddressingMode::None),
         OpCode::new(0x08, "PHP", 1, 3, AddressingMode::None),
@@ -185,10 +199,10 @@ lazy_static! {
         OpCode::new(0xE5, "SBC", 2, 3, AddressingMode::ZeroPage),
         OpCode::new(0xF5, "SBC", 2, 4, AddressingMode::ZeroPage_X),
         OpCode::new(0xED, "SBC", 3, 4, AddressingMode::Absolute),
-        OpCode::new(0xFD, "SBC", 3, 4 /* +1 if page crossed */, AddressingMode::Absolute_X),
-        OpCode::new(0xF9, "SBC", 3, 4 /* +1 if page crossed */, AddressingMode::Absolute_Y),
+        OpCode::new(0xFD, "SBC", 3, Cycles::PageCross(4), AddressingMode::Absolute_X),
+        OpCode::new(0xF9, "SBC", 3, Cycles::PageCross(4), AddressingMode::Absolute_Y),
         OpCode::new(0xE1, "SBC", 2, 6, AddressingMode::Indirect_X),
-        OpCode::new(0xF1, "SBC", 2, 5 /* +1 if page crossed */, AddressingMode::Indirect_Y),
+        OpCode::new(0xF1, "SBC", 2, Cycles::PageCross(5), AddressingMode::Indirect_Y),
 
         OpCode::new(0x38, "SEC", 1, 2, AddressingMode::None),
         OpCode::new(0xF8, "SED", 1, 2, AddressingMode::None),
@@ -238,12 +252,12 @@ lazy_static! {
         // Unofficial IGN
         // Reads a byte from memory and ignores it
         OpCode::new_undoc(0x0C, "NOP", 3, 4, AddressingMode::Absolute),
-        OpCode::new_undoc(0x1C, "NOP", 3, 4 /* +1 if page crossed */, AddressingMode::Absolute_X),
-        OpCode::new_undoc(0x3C, "NOP", 3, 4 /* +1 if page crossed */, AddressingMode::Absolute_X),
-        OpCode::new_undoc(0x5C, "NOP", 3, 4 /* +1 if page crossed */, AddressingMode::Absolute_X),
-        OpCode::new_undoc(0x7C, "NOP", 3, 4 /* +1 if page crossed */, AddressingMode::Absolute_X),
-        OpCode::new_undoc(0xDC, "NOP", 3, 4 /* +1 if page crossed */, AddressingMode::Absolute_X),
-        OpCode::new_undoc(0xFC, "NOP", 3, 4 /* +1 if page crossed */, AddressingMode::Absolute_X),
+        OpCode::new_undoc(0x1C, "NOP", 3, Cycles::PageCross(4), AddressingMode::Absolute_X),
+        OpCode::new_undoc(0x3C, "NOP", 3, Cycles::PageCross(4), AddressingMode::Absolute_X),
+        OpCode::new_undoc(0x5C, "NOP", 3, Cycles::PageCross(4), AddressingMode::Absolute_X),
+        OpCode::new_undoc(0x7C, "NOP", 3, Cycles::PageCross(4), AddressingMode::Absolute_X),
+        OpCode::new_undoc(0xDC, "NOP", 3, Cycles::PageCross(4), AddressingMode::Absolute_X),
+        OpCode::new_undoc(0xFC, "NOP", 3, Cycles::PageCross(4), AddressingMode::Absolute_X),
         OpCode::new_undoc(0x04, "NOP", 2, 3, AddressingMode::ZeroPage),
         OpCode::new_undoc(0x44, "NOP", 2, 3, AddressingMode::ZeroPage),
         OpCode::new_undoc(0x64, "NOP", 2, 3, AddressingMode::ZeroPage),
