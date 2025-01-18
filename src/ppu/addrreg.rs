@@ -14,7 +14,7 @@ impl AddressRegister {
     }
 
     fn set(&mut self, addr: u16) {
-    self.hi_value = (addr >> 8) as u8;
+        self.hi_value = (addr >> 8) as u8;
         self.lo_value = (addr & 0xFF) as u8;
     }
 

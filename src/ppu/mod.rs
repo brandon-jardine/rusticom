@@ -1,3 +1,4 @@
+use bitflags::Flags;
 use scrollreg::ScrollRegister;
 
 use crate::rom::Mirroring;
@@ -28,6 +29,7 @@ pub struct PPU {
     scanline: u16,
     internal_data_buf: u8,
     w: bool,
+    nmi_interrupt: bool,
 }
 
 impl PPU {
@@ -47,7 +49,8 @@ impl PPU {
             mask: MaskRegister::new(),
             status: StatusRegister::new(),
             scroll: ScrollRegister::new(),
-            w: false,
+            w: true, // should this start true or false?
+            nmi_interrupt: false,
         }
     }
 
@@ -62,7 +65,13 @@ impl PPU {
     }
 
     pub fn write_to_ppu_ctrl(&mut self, value: u8) {
+        let before_nmi_status = self.ctrl.flags.contains(ControlFlags::GENERATE_NMI);
         self.ctrl.flags = ControlFlags::from_bits_truncate(value);
+        if !before_nmi_status
+            && self.ctrl.flags.contains(ControlFlags::GENERATE_NMI)
+            && self.status.contains(StatusRegister::VBLANK_FLAG) {
+                self.nmi_interrupt = true;
+        }
     }
 
     pub fn write_to_ppu_mask(&mut self, value: u8) {
@@ -112,13 +121,18 @@ impl PPU {
 
     pub fn read_status(&mut self) -> u8 {
         self.w = false;
-        self.status.bits()
+        let status = self.status.bits();
+        self.status.reset_vblank_status();
+        status
     }
 
     pub fn read_oam_data(&self) -> u8 {
-        todo!("check if we're in vertical or forced vblank interval");
-
-        self.oam_data[self.oam_addr as usize]
+        // Reading OAMDATA while the PPU is rendering will expose internal OAM accessesduring
+        // during sprite evaluation and loading; Micro Machines does this.
+        //
+        // if self.status.contains(StatusRegister::VBLANK_FLAG) {
+            self.oam_data[self.oam_addr as usize]
+        // }
     }
 
     pub fn write_oam_data(&mut self, value: u8) {
@@ -151,7 +165,7 @@ impl PPU {
             if self.scanline == 241 {
                 if self.ctrl.flags.contains(ControlFlags::GENERATE_NMI) {
                     self.status.set_vblank_status(true);
-                    todo!("trigger NMI interrupt")
+                    self.nmi_interrupt = true;
                 }
             }
 

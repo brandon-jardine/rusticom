@@ -1,5 +1,16 @@
 use bitflags::bitflags;
 
+/*
+ * 7  bit  0
+ * ---- ----
+ * VSOx xxxx
+ * |||| ||||
+ * |||+-++++- (PPU open bus or 2C05 PPU identifier)
+ * ||+------- Sprite overflow flag
+ * |+-------- Sprite 0 hit flag
+ * +--------- Vblank flag, cleared on read. Unreliable; see below.
+ */
+
 bitflags! {
     #[derive(Clone)]
     pub struct StatusRegister : u8 {

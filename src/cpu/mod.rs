@@ -692,6 +692,17 @@ impl CPU {
         self.status.set(StatusFlags::NEGATIVE, result & 0b1000_0000 != 0);
     }
 
+    fn interrupt_nmi(&mut self) {
+        self.stack_push_u16(self.program_counter);
+        let mut status = self.status.clone();
+        status.set(StatusFlags::BREAK, false);
+        status.set(StatusFlags::BREAK2, true);
+        self.stack_push(status.bits());
+        self.status.set(StatusFlags::INTERRUPT_DISABLE, true);
+        self.bus.tick(2);
+        self.program_counter = self.mem_read_u16(0xFFFA);
+    }
+
     pub fn run(&mut self) {
         self.run_with_callback(|_| {});
     }
@@ -700,6 +711,10 @@ impl CPU {
         let ref opcodes: HashMap<u8, &'static opcode::OpCode> = *opcode::OPCODES_MAP;
 
         loop {
+            if self.bus.poll_nmi_status() {
+                self.interrupt_nmi();
+            }
+
             callback(self);
 
             if self.pause {

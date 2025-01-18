@@ -73,6 +73,7 @@ impl Mem for Bus {
             0x2001 => self.ppu.write_to_ppu_mask(data),
 
             0x2003 => self.ppu.oam_addr = data,
+            0x2004 => self.ppu.write_oam_data(data),
 
             0x2005 => self.ppu.write_to_ppu_scroll(data),
             0x2006 => self.ppu.write_to_ppu_addr(data),
@@ -123,7 +124,7 @@ impl Bus {
         }
     }
 
-    pub fn poll_nmi_status() -> bool {
+    pub fn poll_nmi_status(&self) -> bool {
         todo!("Get nmi status from ppu");
     }
 
